@@ -1,5 +1,5 @@
 
-#hurry-checkout
+# hurry-checkout
 
 Checkout de uma feature branch enquanto o pull request da feature atual não é aprovado pelo time.
 
