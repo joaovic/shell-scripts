@@ -1,0 +1,285 @@
+#!/bin/bash
+
+### OBJETIVO: 
+### Criar uma branch para uma nova task no Jira.
+### O nome da nova branch deve ser fornecido como argumento. Ex: bash nome-nova-task
+### Se a branch corrente for a 'master', utiliza o nome fornecido como argumento.
+### Se for uma outra branch, adiciona o sufixo "-tmp" no nome da nova branch.
+###
+
+### PASSSOS:
+# 01 - Recupera o nome da branch corrente no git
+# 02 - cria a nova branch derivando da branch atual (git chechout -b nome-branch)
+# 03 - Muda para a branch da master atual (git checkout master)
+# 04 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
+# 05 - Atualiza a branch da master com as informações trazidas do remote (git pull)
+# 06 - Retorna para a branch corrente (git checkout "sua-branch-corrente")
+# 07 - Injeta na branch corrente as atualizações recebidas na master (git merge master)
+# 08 - Envia para o remote as mudanças aplicadas na branch corrente (git push origin "sua-branch-corrente")
+# 09 - Restaura as modificações pendentes da branch corrente (git stash pop)
+
+# Definição de cores para output no console
+BLD='\e[1m'    # BOLD
+DIM='\e[2m'    # DIM
+UND='\e[4m'    # UNDERLINE
+RED='\e[1;31m' # RED
+GRE='\e[1;32m' # GREEN
+YEL='\e[1;33m' # YELLOW
+BLU='\e[1;36m' # BLUE
+DBL='\e[0;36m' # DARK BLUE
+RES='\e[0m'    # RESET ALL
+
+### FUNÇÃO QUE OBTEM O NOME DA BRANCH CORRENTE
+function showHelp {
+  clear
+  printf "${YEL}HURRY CHECKOUT${RES}\n"
+  printf "\n"
+  printf "\n${BLU}Checkout de uma feature branch enquanto a Pull Request da feature atual não é aprovada.${RES}\n"
+  printf "\n"
+  printf "\n${RES}Indicado para a situação onde a branch atual ainda não foi entregue na master devido demora na aprovação do pull request.${RES}\n"
+  printf "\n${RES}Nesse caso, a partir da branch cuja feature está em processo de aprovação, invocamos o script passando como argumento${RES}"
+  printf "\n${RES}o nome desejado para a nova branch. O script vai então adicionar ao nome informado o sufixo ${YEL}'-tmp'${RES} para indicar que se${RES}"
+  printf "\n${RES}trata de uma branch temporária.${RES}"
+  printf "\n"
+  printf "\n${RES}Assim que o pull request da feature anterior for aprovado e a branch correspondente for entregue na master${RES}"
+  printf "\n${RES}devemos, desta vez, a partir da master, invocar o script passando o mesmo nome informado anteriormente.${RES}"
+  printf "\n${RES}Fazendo isso, o script vai identificar que existe uma branch temporária associada e vai trazer todas${RES}"
+  printf "\n${RES}alterações realizadas por lá para esta nova branch.${RES}\n"
+  printf "\n"
+  printf "\n${RED}Importante 1: ${RES}A convenção do nome da branch é importante para controlar o funcionamento deste script.${RES}"
+  printf "\n${RES}            A branch temporária deve ter o sufixo ${BLD}${YEL}'-tmp'${RES}. Por isso não altere o nome da branch temporária${RES}"
+  printf "\n${RES}            criada pelo script.${RES}\n"
+  printf "\n"
+  printf "\n${RED}Importante 2: ${RES}Se precisar de mais de umm nível de feature sem aprovação de PR, não apague as branchs temporárias${RES}"
+  printf "\n${RES}            criadas pelo script.${RES}\n"
+  printf "\n"
+  printf "\n${RES}${BLD}OBS: ${RES}Caso a branch corrente seja a master e não exista branch temporária vinculada, criamos uma branch normal.${RES}\n"
+  printf "\n"
+  printf "\n${BLD}UTILIZAÇÃO${RES}\n"
+  printf "\n${RED}> ${GRE}$(basename ${0}) ${RES}-b${BLD}=${RES}nome-branch${RES}\n"
+  printf "\n"
+  printf "\n${BLD}ARGUMENTOS:${RES}\n"
+  printf "\n\t${YEL}-b  ${BLU}ou${YEL} --branchname${RES}  Informa o nome da branch a ser criada. (${BLD}obrigatório${RES})"
+  printf "\n\t${YEL}-wd ${BLU}ou${YEL} --withdelete${RES}  Indica que deve ser apagada a branch temporária ao final do processo. (${BLD}default${RES}: no delete)"
+  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Indica que não deve pedir confirmacao do usuário. (${BLD}default${RES}: confirm)"
+  printf "\n\t${YEL}-wp ${BLU}ou${YEL} --withpause${RES}   Indica que deve fazer uma pausa antes de cada comando. (${BLD}default${RES}: no pause)"
+  printf "\n\t${YEL}-h  ${BLU}ou${YEL} --help${RES}        Exibe esta ajuda."
+  printf "\n"
+  printf "\n"
+  printf "\n${BLD}VERSAO: ${RES}1.0${RES}"
+  printf "\n${BLD}AUTOR : ${RES}joao.franklin@picpay.com${RES}\n"
+  printf "\n"
+}
+
+### FUNÇÃO QUE OBTEM O NOME DA BRANCH CORRENTE
+function getCurrentBranchName() {
+	__mybranch=$( git rev-parse --abbrev-ref HEAD )
+	echo $__mybranch
+}
+
+### FUNÇÃO QUE VERIFICA SE EXISTE UMA BRANCH INFORMADA
+function existBranch() {
+    __paramBranchName="$1"
+	__checkBranch=`git show-ref refs/heads/${__paramBranchName}`
+    [ -n "$__checkBranch" ];
+}
+
+### FUNÇÃO QUE VERIFICA SE EXISTE A BRANCH TEMPORÁRIA DA BRANCH INFORMADA
+function hasTemporaryBranch() {
+    __paramBranchName="$1-tmp"
+	__checkTempBranch=`git show-ref refs/heads/${__paramBranchName}`
+    [ -n "$__checkTempBranch" ];
+}
+
+### FUNÇÃO QUE FAZ A LEITURA DE UMA PROPRIEDADE DE UM ARQUIVO DE PROPRIEDADES
+### Parametros: 1-nome do arquivo de propriedades; 2-nome da propriedade a ser lida
+function readProp()
+{
+  if [ -s ${1} ]; then
+    __aVar=$(grep "^\\s*${2}"= ${1}|cut -d'=' -f2-)
+    __sVar="${__aVar//[$'\t\r\n ']}"
+    echo $__sVar
+  fi
+}
+
+function pause(){
+    if [ "$WITHPAUSE" = "YES" ]; then
+        read -p "$*"
+    fi
+}
+ 
+#Inicializa default para que seja pedido a confirmação de execução para o usuário
+NOCONFIRM="NO"
+WITHDELETE="NO"
+WITHPAUSE="NO"
+
+__fileName="$(basename ${0})"
+
+if [ $# -eq 0 ]; then
+    showHelp
+    exit -1
+fi
+
+#LOOP atraves dos parametros
+for i in "$@"
+do
+  case $i in
+    -b=*|branch=*)
+    BRANCH="${i#*=}"
+    shift
+    ;;
+    -nc|--noconfirm)
+    NOCONFIRM="YES"
+    shift
+    ;;
+    -wd|--withdelete)
+    WITHDELETE="YES"
+    shift
+    ;;
+    -wp|--withpause)
+    WITHPAUSE="YES"
+    shift
+    ;;
+    -h|--help)
+    showHelp
+    exit 0
+    ;;
+    *)
+    # unknown option
+    PARAMERROR=${PARAMERROR}${i}"\n"
+    shift
+    ;;
+  esac
+done
+
+if [ ! "$PARAMERROR" = "" ]; then
+  printf "\n\n${RED}########  ERROR  #########${RES}\n"
+  printf "\n${YEL}INVALID ARGUMENT(S):${RES}"
+  printf "\n${BLD}${PARAMERROR}${RES}\n"
+  printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName} -h (or --help)' ${YEL}for help.${RES}\n\n\n"
+  exit -1
+fi
+
+###
+### INICIO
+###
+
+# Define o nome da branch informada no argumento do script
+__newBranchNameInformed="$BRANCH"
+
+# Recupera o nome da branch corrente no git
+__currentBranchName=$(getCurrentBranchName)
+
+if [ "$__currentBranchName" = "master" ]; then
+  __newBranchNameCalculated=${__newBranchNameInformed}
+  __onMasterBranch=true
+else
+  __newBranchNameCalculated="${__newBranchNameInformed}${BLU}-tmp${RES}"
+  __onMasterBranch=false
+fi
+
+if [ "$NOCONFIRM" = "NO" ]; then
+    printf "\n${YEL}Create a new branch named ${BLU}$__newBranchNameCalculated${YEL} derived from ${BLU}$__currentBranchName${YEL} ?${RES}\n\n"
+    printf "${BLD}Confirm?${RES}"
+    read -p " (Y/N) " ans_yn
+    case "$ans_yn" in
+    [Yy]|[Ss]) 
+    printf "\n${RES}${YEL}Going ahead...${RES}\n\n";;
+    *) 
+    printf "\n${RES}${RED}Cancelled!${RES}\n\n" 
+    exit 1;;
+    esac
+fi
+
+__temporaryBranchName="${__newBranchNameInformed}-tmp"
+
+# estando na master:
+if $__onMasterBranch; then
+    #  1. ja existe a temp branch
+    #     1.0 faz as validações e aborta o processo em caso de algum erro
+    #     1.1 cria a nova branch ou alterna para ela caso já exista
+    #     1.2 fazer o cherry-pick
+    #     1.3 apagar a temp branch
+    #  2. não existe a temp branch
+    #     2.1 cria a branch informada normalmente (sem sufixo tmp)
+
+    if hasTemporaryBranch ${__newBranchNameInformed}; then
+        # 00.1 - Valida existencia do arquivo contendo o nome da feature branch anterior
+        if [ ! -s ~/.${__fileName} ]; then
+            printf "\n${RED}File containing the name of the old feature branch is missing!${RES}\n"
+            printf "\n${YEL}Create a property named ${__newBranchNameInformed} for the old feature branch${RES}"
+            printf "\n${YEL}on a file named '.${__fileName}' at your home directory!${RES}\n"
+            exit -1
+        fi
+
+        # 00.2 - Valida existencia da propriedade '__newBranchNameInformed' no arquivo de propriedades
+        __oldFeatureBranch=$(readProp ~/.${__fileName} ${__newBranchNameInformed})
+
+        if [ -z "${__oldFeatureBranch}" ]; then
+            printf "\n${RED}Property ${__newBranchNameInformed} on the file named '~/.${__fileName}' is empty!${RES}\n"
+            exit -1
+        fi
+
+        # 00.3 - Valida existencia da old feature branch informada na propriedade ${__newBranchNameInformed} no arquivo
+        if ! existBranch ${__oldFeatureBranch}; then
+            printf "\n${RED}Branch ${__oldFeatureBranch} does not exists in this repository!${RES}\n"
+            printf "\n${RED}It is configured by the ${__newBranchNameInformed} property on the file '~/.${__fileName}'${RES}\n"
+            exit -1
+        fi
+
+        if existBranch ${__newBranchNameInformed}; then
+            # 01 - Alterna para branch final da nova feature (git checkout branch-name)
+            printf "\n${YEL}Switching to the new feature branch ${GRE}${__newBranchNameInformed}${YEL} [${RES}git checkout $__newBranchNameInformed${YEL}]...${RES}\n"
+            pause "Press RETURN to continue or ^C to abort..."
+            git checkout ${__newBranchNameInformed}
+        else
+            # 01 - Cria a branch final para a nova feature (git checkout -b branch-name)
+            printf "\n${YEL}Creating and switching to the new feature branch ${GRE}${__newBranchNameInformed}${YEL} [${RES}git checkout -b $__newBranchNameInformed${YEL}]...${RES}\n"
+            pause "Press RETURN to continue or ^C to abort..."
+            git checkout -b ${__newBranchNameInformed}
+        fi
+        
+        # 02 - Traz para a nova feature branch as alterações criadas na branch temporária (git cherry-pick branch-name)
+        printf "\n${YEL}Bring all work made at ${GRE}${__temporaryBranchName}${YEL} [${RES}git cherry-pick ${__oldFeatureBranch}..${__temporaryBranchName}${YEL}]...${RES}\n"
+        pause "Press RETURN to continue or ^C to abort..."
+        git cherry-pick ${__oldFeatureBranch}..${__temporaryBranchName}
+
+        if [ "$WITHDELETE" = "YES" ]; then
+            # 03 - Apaga a branch temporária
+            printf "\n${YEL}Delete the temporary branch ${GRE}${__temporaryBranchName}${YEL} [${RES}git branch -D ${__temporaryBranchName}${YEL}]${RES}\n"
+            pause "Press RETURN to continue or ^C to abort..."
+            git branch -D ${__temporaryBranchName}
+        fi
+    else
+        # 01 - Cria a nova feature branch (git checkout -b branch-name)
+        printf "\n${YEL}Creating and switching to the new feature branch ${GRE}${__newBranchNameInformed}${YEL} [${RES}git checkout -b $__newBranchNameInformed${YEL}]...${RES}\n"
+        pause "Press RETURN to continue or ^C to abort..."
+        git checkout -b ${__newBranchNameInformed}
+    fi
+else # estando numa feature branch (tratada agora como 'old_feature_branch'):
+    #  1. já existe a temp branch
+    #     1.1 faz o checkout da temp branch
+    #     1.2 informando que a temp branch já existia
+    #  2. não existe a temp branch
+    #     2.1 cria a temp branch
+    #     2.1 informa que foi criada a temp branch
+
+    if hasTemporaryBranch ${__newBranchNameInformed}; then
+        # 01 - Registra na pasta home do usuário o nome na feature branch atual
+        printf "\n${YEL}Switching to the existent temporary branch ${GRE}${__temporaryBranchName}${YEL} [${RES}git checkout $__temporaryBranchName${YEL}]...${RES}\n"
+        pause "Press RETURN to continue or ^C to abort..."
+        git checkout ${__temporaryBranchName}
+    else
+        # 01 - Registra na pasta home do usuário o nome da 'old' feature branch
+        printf "\n${YEL}Updating file ${GRE}~/.${__fileName}${YEL} with value ${BLU}${__newBranchNameInformed}${RES}${BLD}=${RES}${BLU}${__currentBranchName}${RES}\n"
+        pause "Press RETURN to continue or ^C to abort..."
+        echo "${__newBranchNameInformed}=${__currentBranchName}" >> ~/.${__fileName}
+
+        # 02 - Cria a temporary branch (git checkout -b new-feature-branch-tmp)
+        printf "\n${YEL}Creating and switching to the new temporary branch ${GRE}${__temporaryBranchName}${YEL} [${RES}git checkout -b $__temporaryBranchName${YEL}]...${RES}\n"
+        pause "Press RETURN to continue or ^C to abort..."
+        git checkout -b ${__temporaryBranchName}
+    fi
+fi
+
+printf "\n${GRE}Done!${RES}\n\n"
