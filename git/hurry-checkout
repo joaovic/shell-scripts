@@ -1,8 +1,9 @@
 #!/bin/bash
 
 ### OBJETIVO: 
-### Criar uma branch para uma nova task no Jira.
-### O nome da nova branch deve ser fornecido como argumento. Ex: bash nome-nova-task
+### Criar uma branch para um checkout apressado de uma nova task antes que a branch
+### da task anterior tenha seu pull request aprovado pelo time.
+### O nome da nova branch deve ser fornecido como argumento. Ex: hurry-checkout nome-nova-task
 ### Se a branch corrente for a 'master', utiliza o nome fornecido como argumento.
 ### Se for uma outra branch, adiciona o sufixo "-tmp" no nome da nova branch.
 ###
@@ -32,9 +33,9 @@ RES='\e[0m'    # RESET ALL
 ### FUNÇÃO QUE OBTEM O NOME DA BRANCH CORRENTE
 function showHelp {
   clear
-  printf "${YEL}HURRY CHECKOUT${RES}\n"
+  printf "\n${YEL}HURRY CHECKOUT${RES}\n"
   printf "\n"
-  printf "\n${BLU}Checkout de uma feature branch enquanto a Pull Request da feature atual não é aprovada.${RES}\n"
+  printf "\n${BLU}Checkout de uma feature branch enquanto o pull request da feature atual não é aprovado pelo time.${RES}\n"
   printf "\n"
   printf "\n${RES}Indicado para a situação onde a branch atual ainda não foi entregue na master devido demora na aprovação do pull request.${RES}\n"
   printf "\n${RES}Nesse caso, a partir da branch cuja feature está em processo de aprovação, invocamos o script passando como argumento${RES}"
@@ -47,13 +48,12 @@ function showHelp {
   printf "\n${RES}alterações realizadas por lá para esta nova branch.${RES}\n"
   printf "\n"
   printf "\n${RED}Importante 1: ${RES}A convenção do nome da branch é importante para controlar o funcionamento deste script.${RES}"
-  printf "\n${RES}            A branch temporária deve ter o sufixo ${BLD}${YEL}'-tmp'${RES}. Por isso não altere o nome da branch temporária${RES}"
-  printf "\n${RES}            criada pelo script.${RES}\n"
+  printf "\n${RES}            A branch temporária deve ter o sufixo ${BLD}${YEL}'-tmp'${RES}, por isso não altere o criado pelo script.${RES}\n"
   printf "\n"
   printf "\n${RED}Importante 2: ${RES}Se precisar de mais de umm nível de feature sem aprovação de PR, não apague as branchs temporárias${RES}"
   printf "\n${RES}            criadas pelo script.${RES}\n"
   printf "\n"
-  printf "\n${RES}${BLD}OBS: ${RES}Caso a branch corrente seja a master e não exista branch temporária vinculada, criamos uma branch normal.${RES}\n"
+  printf "\n${RES}${BLD}OBS: ${RES}Caso a branch corrente seja a master e não exista uma branch temporária correspondente, a branch é criada normalmente.${RES}\n"
   printf "\n"
   printf "\n${BLD}UTILIZAÇÃO${RES}\n"
   printf "\n${RED}> ${GRE}$(basename ${0}) ${RES}-b${BLD}=${RES}nome-branch${RES}\n"
@@ -61,13 +61,13 @@ function showHelp {
   printf "\n${BLD}ARGUMENTOS:${RES}\n"
   printf "\n\t${YEL}-b  ${BLU}ou${YEL} --branchname${RES}  Informa o nome da branch a ser criada. (${BLD}obrigatório${RES})"
   printf "\n\t${YEL}-wd ${BLU}ou${YEL} --withdelete${RES}  Indica que deve ser apagada a branch temporária ao final do processo. (${BLD}default${RES}: no delete)"
-  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Indica que não deve pedir confirmacao do usuário. (${BLD}default${RES}: confirm)"
-  printf "\n\t${YEL}-wp ${BLU}ou${YEL} --withpause${RES}   Indica que deve fazer uma pausa antes de cada comando. (${BLD}default${RES}: no pause)"
+  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Indica que não deve pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
+  printf "\n\t${YEL}-wp ${BLU}ou${YEL} --withpause${RES}   Indica que deve fazer uma pausa de confirmação antes de cada comando. (${BLD}default${RES}: no pause)"
   printf "\n\t${YEL}-h  ${BLU}ou${YEL} --help${RES}        Exibe esta ajuda."
   printf "\n"
   printf "\n"
   printf "\n${BLD}VERSAO: ${RES}1.0${RES}"
-  printf "\n${BLD}AUTOR : ${RES}joao.franklin@picpay.com${RES}\n"
+  printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
 
