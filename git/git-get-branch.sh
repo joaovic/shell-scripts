@@ -1,20 +1,21 @@
 #!/bin/bash
 
-### OBJETIVO: 
-### Recuperar uma nova branch do VSTS baseada na master
-### Ou seja, atualiza a master com os dados da master remote, 
-### traz as alterações existentes na master remote para a master local
-### e cria a nova branch informada no param localmente baseada na branch
-### homonima remota
+### OBJETIVO:
+### Recuperar uma nova branch remota do controle de versão baseada na master
+### Ou seja, atualiza a master local com os dados da master remota,
+### traz as alterações existentes na master remota para a master local
+### e cria a nova branch local informada no argumento baseada na branch
+### remota de mesmo nome.
 
 ### PRÉ-CONDIÇÃO
-### A branch corrente não pode ter nenhuma pedência local
+### A branch corrente não pode ter nenhuma pendência local
 
 ### PASSSOS:
 # 01 - Muda para a branch da master atual (git checkout master)
 # 02 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
 # 03 - Atualiza a branch da master com as informações trazidas do remote (git pull)
 # 04 - Cria a branch local informada no param vinculando com a branch homônima remota
+
 
 # Definição de cores para output no console
 BLD='\e[1m'    # BOLD
