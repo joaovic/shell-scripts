@@ -14,7 +14,6 @@ Fazendo isso, o script vai identificar que existe uma branch temporária associa
 
 - Importante 2: Se precisar de mais de umm nível de feature sem aprovação de PR, não apague as branchs temporárias criadas pelo script.
 
-
 OBS: Caso a branch corrente seja a master e não exista uma branch temporária correspondente, a branch é criada normalmente.
 
 
@@ -25,10 +24,11 @@ OBS: Caso a branch corrente seja a master e não exista uma branch temporária c
 
 ## Argumentos:
 ```
--b  ou --branchname  Informa o nome da branch a ser criada. (obrigatório)
--wd ou --withdelete  Indica que deve ser apagada a branch temporária ao final do processo. (default: no delete)
--nc ou --noconfirm   Indica que não deve pedir confirmação do usuário para iniciar o processo. (default: confirm)
--wp ou --withpause   Indica que deve fazer uma pausa de confirmação antes de cada comando. (default: no pause)
+-b  ou --branchname  O nome da branch a ser criada. (obrigatório)
+-wd ou --withdelete  Permite apagar a branch temporária ao final do processo. (default: no delete)
+-nc ou --noconfirm   Permite não pedir confirmação do usuário para iniciar o processo. (default: confirm)
+-nu ou --noupdate    Permite não atualizar a master local com base na remota antes de iniciar o processo. (default: update)
+-wp ou --withpause   Uma pausa antes execução de cada comando. (default: no pause)
 -h  ou --help        Exibe esta ajuda.
 ```
 
