@@ -28,6 +28,37 @@ BLU='\e[1;36m' # BLUE
 DBL='\e[0;36m' # DARK BLUE
 RES='\e[0m'    # RESET ALL
 
+### FUNÇÃO EXIBE O HELP DO SCRIPT
+function showHelp {
+  clear
+  printf "\n${YEL}GIT GET MASTER${RES}\n"
+  printf "\n"
+  printf "\n${BLU}Recupera para sua branch corrente as últimas atualizações realizadas na MASTER remota.${RES}\n"
+  printf "\n"
+  printf "\n${RES}Indicado para minimizar a quantidade de conflitos na hora de entregar sua pull request (PR).${RES}\n"
+  printf "\n${RES}As atualizações da master remota são trazidas para sua branch com o uso do ${BLD}rebase${RES}, desta forma os${RES}"
+  printf "\n${RES}commits realizados na sua branch corrente ficam sempre agrupados favorecendo o entendimento do histório${RES}"
+  printf "\n${RES}de alterações.${RES}"
+  printf "\n"
+  printf "\n${RES}Além disso, é tomado o cuidado de armazenar as suas alterações ainda não commitadas com stash antes de iniciar${RES}"
+  printf "\n${RES}o processamente, e caso algum conteúdo precisou ser armazenado, ele é automaticamente recuperado ao final do processo.${RES}"
+  printf "\n"
+  printf "\n${BLD}UTILIZAÇÃO${RES}\n"
+  printf "\n${RED}> ${GRE}$(basename ${0})${RES}\n"
+  printf "\n"
+  printf "\n${BLD}ARGUMENTOS:${RES}\n"
+  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
+  printf "\n\t${YEL}-wd ${BLU}ou${YEL} --nopopstash${RES}  Informa que um eventual stash será recuperado sem apagar o stash ao final do processo. (${BLD}default${RES}: do pop)"
+  printf "\n\t${YEL}-nu ${BLU}ou${YEL} --dopush${RES}      Indica que deve ser feito o 'push' ao final do processo. (${BLD}default${RES}: no-push)"
+  printf "\n\t${YEL}-wp ${BLU}ou${YEL} --withpause${RES}   Uma pausa antes execução de cada comando. (${BLD}default${RES}: no pause)"
+  printf "\n\t${YEL}-h  ${BLU}ou${YEL} --help${RES}        Exibe esta ajuda."
+  printf "\n"
+  printf "\n"
+  printf "\n${BLD}VERSAO: ${RES}1.0${RES}"
+  printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
+  printf "\n"
+}
+
 ### FUNÇÃO QUE OBTEM O NOME DA BRANCH CORRENTE
 function getCurrentBranchName() {
 	__mybranch=$( git rev-parse --abbrev-ref HEAD )
@@ -41,6 +72,57 @@ function getCurrentBranchName() {
 # 01 - Recupera o nome da branch corrente no git
 __currentBranchName=$(getCurrentBranchName)
 
+# Default para que seja pedido a confirmação de execução para o usuário
+NOCONFIRM="NO"
+
+# Default para que seja realizado o push ao final do processo
+DOPUSH="NO"
+
+# Default para que seja feito o pop do stash ao final do processo (apagando da stack do stash) 
+NOPOPSTASH="NO"
+
+# Default para que cada comando seja executado com uma pausa antes (para debug)
+WITHPAUSE="NO"
+
+#LOOP atraves dos parametros
+for i in "$@"
+do
+  case $i in
+    -nc|--noconfirm)
+    NOCONFIRM="YES"
+    shift
+    ;;
+    -dp|--dupush)
+    DOPUSH="YES"
+    shift
+    ;;
+    -nps|--nopopstash)
+    NOPOPSTASH="YES"
+    shift
+    ;;
+    -wp|--withpause)
+    WITHPAUSE="YES"
+    shift
+    ;;
+    -h|--help)
+    showHelp
+    exit 0
+    ;;
+    *)
+    # unknown option
+    PARAMERROR=${PARAMERROR}${i}"\n"
+    shift
+    ;;
+  esac
+done
+
+if [ ! "$PARAMERROR" = "" ]; then
+  printf "\n\n${RED}########  ERROR  #########${RES}\n"
+  printf "\n${YEL}INVALID ARGUMENT(S):${RES}"
+  printf "\n${BLD}${PARAMERROR}${RES}\n"
+  printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName} -h (or --help)' ${YEL}for help.${RES}\n\n\n"
+  exit -1
+fi
 
 printf "\n${YEL}Get master updates into your branch ${GRE}$__currentBranchName${RES}?\n\n"
 read -p "Confirm? (Y/N) " ans_yn
