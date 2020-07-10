@@ -1,0 +1,164 @@
+#!/bin/bash
+
+### OBJETIVO:
+### Recuperar uma nova branch remota do controle de versão baseada na master
+### Ou seja, atualiza a master local com os dados da master remota,
+### traz as alterações existentes na master remota para a master local
+### e cria a nova branch local informada no argumento baseada na branch
+### remota de mesmo nome.
+
+### PRÉ-CONDIÇÃO
+### A branch corrente não pode ter nenhuma pendência local
+
+### PASSSOS:
+# 01 - Muda para a branch da master atual (git checkout master)
+# 02 - Atualiza a branch da master com as informações trazidas do remote (git pull)
+# 03 - Cria a branch local (git checkout -b $1)
+# 04 - Configura a branch local para rastrear a branch remota (git branch -u origin/${BRANCH})
+
+# Definição de cores para output no console
+BLD='\e[1m'    # BOLD
+DIM='\e[2m'    # DIM
+UND='\e[4m'    # UNDERLINE
+RED='\e[1;31m' # RED
+GRE='\e[1;32m' # GREEN
+YEL='\e[1;33m' # YELLOW
+BLU='\e[0;36m' # BLUE
+RES='\e[0m'    # RESET ALL
+
+### FUNÇÃO QUE EXIBE O HELP
+function showHelp {
+  clear
+  printf "\n${YEL}GIT GET BRANCH${RES}\n"
+  printf "\n"
+  printf "\n${BLU}Script que cria uma nova branch local baseada numa branch remota existente.${RES}\n"
+  printf "\n"
+  printf "\n${RES}Indicado para a situação onde exista uma branch remota que se deseja atuar localmente.${RES}\n"
+  printf "\n"
+  printf "\n${RES}O script vai recuperar uma nova branch remota do controle de versão${RES}"
+  printf "\n${RES}Ou seja, atualiza a master local com os dados da master remota,${RES}"
+  printf "\n${RES}traz as alterações existentes na master remota para a master local${RES}"
+  printf "\n${RES}e cria a nova branch local informada no argumento baseada na branch${RES}"
+  printf "\n${RES}remota de mesmo nome.${RES}"
+  printf "\n"
+  printf "\n${BLD}UTILIZAÇÃO${RES}\n"
+  printf "\n${RED}> ${GRE}$(basename ${0}) ${RES}-b${BLD}=${RES}remote-branch-name${RES}\n"
+  printf "\n"
+  printf "\n${BLD}ARGUMENTOS:${RES}\n"
+  printf "\n\t${YEL}-b  ${BLU}ou${YEL} --branchname${RES}  O nome da branch remota a ser criada localmente. (${BLD}obrigatório${RES})"
+  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
+  printf "\n\t${YEL}-wp ${BLU}ou${YEL} --withpause${RES}   Uma pausa antes execução de cada comando. (${BLD}default${RES}: no pause)"
+  printf "\n\t${YEL}-h  ${BLU}ou${YEL} --help${RES}        Exibe esta ajuda."
+  printf "\n"
+  printf "\n"
+  printf "\n${BLD}VERSAO: ${RES}1.0${RES}"
+  printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
+  printf "\n"
+}
+
+function pause(){
+	if [ "$WITHPAUSE" = "YES" ]; then
+		read -p "$*"
+	fi
+}
+
+# Valida se informou o nome da branch para buscar no remote
+if [ -z "$1" ]; then
+	printf "\n${RES}${RED}Please, provide the new branch name!${RES}\n\n" 
+	showHelp
+	exit -1
+fi
+
+# Default para que seja pedido a confirmação de execução para o usuário
+NOCONFIRM="NO"
+
+# Default para que cada comando seja executado com uma pausa antes (para debug)
+WITHPAUSE="NO"
+
+#LOOP atraves dos parametros
+for i in "$@"
+do
+  case $i in
+    -b=*|branch=*)
+    BRANCH="${i#*=}"
+    shift
+    ;;
+    -nc|--noconfirm)
+    NOCONFIRM="YES"
+    shift
+    ;;
+    -wp|--withpause)
+    WITHPAUSE="YES"
+    shift
+    ;;
+    -h|--help)
+    showHelp
+    exit 0
+    ;;
+    *)
+    # unknown option
+    PARAMERROR=${PARAMERROR}${i}"\n"
+    shift
+    ;;
+  esac
+done
+
+if [ ! "$PARAMERROR" = "" ]; then
+  printf "\n\n${RED}########  ERROR  #########${RES}\n"
+  printf "\n${YEL}INVALID ARGUMENT(S):${RES}"
+  printf "\n${BLD}${PARAMERROR}${RES}\n"
+  printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName} -h (or --help)' ${YEL}for help.${RES}\n\n\n"
+  exit -1
+fi
+
+if [ "$NOCONFIRM" = "NO" ]; then
+	# 01 - Verifica se deseja realmemte realizar a criação da branch
+	printf "\n${YEL}Create local branch ${GRE}'${BRANCH}'${RES} ${YEL}tracking remote branch ${GRE}'origin/${BRANCH}'${YEL}?${RES}\n"
+	read -p "Confirm? (Y/N) " ans_yn
+	case "$ans_yn" in
+	[Yy]|[Ss]) 
+		printf "\n${RES}${YEL}Going ahead...${RES}";;
+	*) 
+	printf "\n${RES}${RED}Cancelled!${RES}\n" 
+	exit 1;;
+	esac
+fi
+
+# Valida se a branch informada existe remotamente
+hasRemoteBranch=$(git ls-remote --heads origin ${BRANCH} | wc -l)
+if [ $hasRemoteBranch -eq 0 ]; then
+	printf "\n${RES}${RED}Provided remote branch name not found!${RES}\n" 
+	exit 1
+fi
+
+###
+### INICIO DOS PASSOS
+###
+
+# 01 - Muda para a branch da master atual (git checkout master)
+printf "\n${YEL}Switching to the master branch [${RES}git checkout master${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
+git checkout master
+
+# 02 - Atualiza a branch da master com as informações trazidas do remote (git pull)
+printf "\n${YEL}Updating master local branch with remote data [${RES}git pull${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
+git pull
+
+if [ "$?" -eq 1 ]; then
+	printf "\n${RED}Problem with the pull command!${RES}\n"
+	exit $?
+fi
+
+# 03 - Cria a branch local (git checkout -b $1)
+printf "\n${YEL}Create and switch to the new local branch ${GRE}${BRANCH}${YEL} [${RES}git checkout -b ${BRANCH}${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
+git checkout -b ${BRANCH}
+
+# 04 - Configura a branch local para rastrear a branch remota (git branch -u origin/${BRANCH})
+printf "\n${YEL}Configuring ${GRE}${BRANCH}${YEL} to track remote branch ${GRE}origin/${BRANCH}${YEL}... [${RES}git branch -u origin/${BRANCH}${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
+git branch -u origin/${BRANCH}
+git status
+
+printf "\n\n${GRE}Done!${RES}\n"

@@ -30,7 +30,7 @@ BLU='\e[1;36m' # BLUE
 DBL='\e[0;36m' # DARK BLUE
 RES='\e[0m'    # RESET ALL
 
-### FUNÇÃO QUE OBTEM O NOME DA BRANCH CORRENTE
+### FUNÇÃO QUE EXIBE O HELP
 function showHelp {
   clear
   printf "\n${YEL}HURRY CHECKOUT${RES}\n"
