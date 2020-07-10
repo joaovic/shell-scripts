@@ -47,9 +47,9 @@ function showHelp {
   printf "\n${RED}> ${GRE}$(basename ${0})${RES}\n"
   printf "\n"
   printf "\n${BLD}ARGUMENTOS:${RES}\n"
-  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
-  printf "\n\t${YEL}-wd ${BLU}ou${YEL} --nopopstash${RES}  Informa que um eventual stash será recuperado sem apagar o stash ao final do processo. (${BLD}default${RES}: do pop)"
-  printf "\n\t${YEL}-nu ${BLU}ou${YEL} --dopush${RES}      Indica que deve ser feito o 'push' ao final do processo. (${BLD}default${RES}: no-push)"
+  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: do confirm)"
+  printf "\n\t${YEL}-np ${BLU}ou${YEL} --nopop${RES}       Informa que um eventual stash será recuperado sem ${BLD}pop${RES} mas com ${BLD}apply${RES} ao final do processo. (${BLD}default${RES}: use pop)"
+  printf "\n\t${YEL}-dp ${BLU}ou${YEL} --dopush${RES}      Indica que deve ser feito o ${BLD}push${RES} ao final do processo. (${BLD}default${RES}: no-push)"
   printf "\n\t${YEL}-wp ${BLU}ou${YEL} --withpause${RES}   Uma pausa antes execução de cada comando. (${BLD}default${RES}: no pause)"
   printf "\n\t${YEL}-h  ${BLU}ou${YEL} --help${RES}        Exibe esta ajuda."
   printf "\n"
@@ -63,6 +63,12 @@ function showHelp {
 function getCurrentBranchName() {
 	__mybranch=$( git rev-parse --abbrev-ref HEAD )
 	echo $__mybranch
+}
+
+function pause(){
+    if [ "$WITHPAUSE" = "YES" ]; then
+        read -p "$*"
+    fi
 }
 
 ###
@@ -79,7 +85,7 @@ NOCONFIRM="NO"
 DOPUSH="NO"
 
 # Default para que seja feito o pop do stash ao final do processo (apagando da stack do stash) 
-NOPOPSTASH="NO"
+NOPOP="NO"
 
 # Default para que cada comando seja executado com uma pausa antes (para debug)
 WITHPAUSE="NO"
@@ -92,12 +98,12 @@ do
     NOCONFIRM="YES"
     shift
     ;;
-    -dp|--dupush)
+    -dp|--dopush)
     DOPUSH="YES"
     shift
     ;;
-    -nps|--nopopstash)
-    NOPOPSTASH="YES"
+    -np|--nopop)
+    NOPOP="YES"
     shift
     ;;
     -wp|--withpause)
@@ -124,33 +130,37 @@ if [ ! "$PARAMERROR" = "" ]; then
   exit -1
 fi
 
-printf "\n${YEL}Get master updates into your branch ${GRE}$__currentBranchName${RES}?\n\n"
-read -p "Confirm? (Y/N) " ans_yn
-case "$ans_yn" in
- [Yy]|[Ss])
-   printf "\n${RES}${YEL}Going ahead...${RES}\n";;
- *)
- printf "\n${RES}${RED}Cancelled!${RES}\n"
- exit 1;;
-esac
+if [ "$NOCONFIRM" = "NO" ]; then
+  printf "\n${YEL}Get master updates into your branch ${GRE}$__currentBranchName${RES}?\n\n"
+  read -p "Confirm? (Y/N) " ans_yn
+  case "$ans_yn" in
+  [Yy]|[Ss])
+    printf "\n${RES}${YEL}Going ahead...${RES}\n";;
+  *)
+  printf "\n${RES}${RED}Cancelled!${RES}\n"
+  exit 1;;
+  esac
+fi
 
 # 02 - Salva o status corrente das modificações ainda não comitadas (git stash)
 
 # Verifica a lista de stash antes do stash
-git stash list > stashListAux1.tmp
+git stash list > /tmp/stashListAux1.tmp
 
 # Realiza o stash se necessário
 printf "\n${YEL}Saving actual work in progress [${RES}git stash${YEL}]...${RES}\n"
-git stash
+pause "Press RETURN to continue or ^C to abort..."
+NOW=$(date +"%d/%m/%Y-%T")
+git stash push -a -m "by git-get-master on ${NOW}" 
 
 # Verifica a lista de stash apos o stash
-git stash list > stashListAux2.tmp
+git stash list > /tmp/stashListAux2.tmp
 
 # Verifica a diferenca entre as listas antes e apos o stash
-diff stashListAux1.tmp stashListAux2.tmp > stashListAux.tmp
+diff /tmp/stashListAux1.tmp /tmp/stashListAux2.tmp > /tmp/stashListAux.tmp
 
 # Diferenca entre listas indica que um stash foi realizado e precisa ser desfeito (stash pop) ao final
-if [[ -f "stashListAux.tmp" && -s "stashListAux.tmp" ]]; then
+if [[ -f "/tmp/stashListAux.tmp" && -s "/tmp/stashListAux.tmp" ]]; then
 	stashCount=1
 	printf "\n${YEL}Content has been stashed and will be restored after sync...${RES}\n"
 else
@@ -159,18 +169,21 @@ else
 fi
 
 # Remove os arquivos temporarios usados para detectar necessidade de undo stash
-rm stashListAux.tmp stashListAux1.tmp stashListAux2.tmp
+rm /tmp/stashListAux.tmp /tmp/stashListAux1.tmp /tmp/stashListAux2.tmp
 
 # 03 - Muda para a branch da master atual (git checkout master)
 printf "\n${YEL}Switching to the master branch [${RES}git checkout ${GRE}master${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
 git checkout master
 
 # 04 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
 printf "\n${YEL}Fetching remote repository updates [${RES}git fetch origin${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
 git fetch origin
 
 # 05 - Atualiza a branch da master com as informações trazidas do remote (git pull)
 printf "\n${YEL}Updating master local branch with remote data [${RES}git pull${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
 git pull
 
 if [ "$?" -eq 1 ]; then
@@ -180,10 +193,12 @@ fi
 
 # 06 - Retorna para a branch corrente (git checkout "sua-branch-corrente")
 printf "\n${YEL}Going back to our working branch [${RES}git checkout ${GRE}$__currentBranchName${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
 git checkout $__currentBranchName
 
-# 07 - Injeta na branch corrente as atualizações recebidas na master (git merge master)
-printf "\n${YEL}Getting master updates into our working branch [${RES}git merge ${GRE}master${YEL}]...${RES}\n"
+# 07 - Injeta na branch corrente as atualizações recebidas na master (git rebase master)
+printf "\n${YEL}Getting master updates into our working branch [${RES}git rebase ${GRE}master${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
 git rebase master
 
 if [ "$?" -eq 1 ]; then
@@ -192,14 +207,26 @@ if [ "$?" -eq 1 ]; then
 fi
 
 # 08 - Envia para o remote as mudanças aplicadas na branch corrente (git push origin "sua-branch-corrente")
-printf "\n${YEL}Sending updated data into working remote branch [${RES}git push origin ${GRE}$__currentBranchName${YEL}]...${RES}\n"
-git push origin $__currentBranchName
+if [ "$DOPUSH" = "YES" ]; then
+  printf "\n${YEL}Sending updated data into working remote branch [${RES}git push origin ${GRE}$__currentBranchName${YEL}]...${RES}\n"
+  pause "Press RETURN to continue or ^C to abort..."
+  git push origin $__currentBranchName
+fi
 
 ## Check if it is needed to run the git stash pop command
 if [ $stashCount -gt 0 ]; then
-	# 09 - Restaura as modificações pendentes da branch corrente (git stash pop)
-	printf "\n${YEL}Restoring work stashed [${RES}git stash pop${YEL}]...${RES}\n"
+
+# 09 - Restaura as modificações pendentes da branch corrente (git stash pop)
+if [ "$NOPOP" = "NO" ]; then
+	printf "\n${YEL}Restoring work stashed with pop [${RES}git stash pop${YEL}]...${RES}\n"
+  pause "Press RETURN to continue or ^C to abort..."
 	git stash pop
+else
+	printf "\n${YEL}Restoring work stashed without popping it [${RES}git stash apply${YEL}]...${RES}\n"
+  pause "Press RETURN to continue or ^C to abort..."
+	git stash apply
+fi
+
 fi
 
 printf "\n\n${GRE}Done!${RES}\n"
