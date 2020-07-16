@@ -13,7 +13,7 @@
 # 04 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
 # 05 - Atualiza a branch da master com as informações trazidas do remote (git pull)
 # 06 - Retorna para a branch corrente (git checkout "sua-branch-corrente")
-# 07 - Injeta na branch corrente as atualizações recebidas na master (git rebase master)
+# 07 - Injeta na branch corrente as atualizações recebidas na master (git merge/rebase master)
 # 08 - Envia para o remote as mudanças aplicadas na branch corrente (git push origin "sua-branch-corrente")
 # 09 - Restaura as modificações pendentes da branch corrente (git stash pop)
 
@@ -47,6 +47,7 @@ function showHelp {
   printf "\n${RED}> ${GRE}$(basename ${0})${RES}\n"
   printf "\n"
   printf "\n${BLD}ARGUMENTOS:${RES}\n"
+  printf "\n\t${YEL}-s  ${BLU}ou${YEL} --strategy${RES}    Informa qual estratégia deve ser usada ${BLD}merge${RES} ou ${BLD}rebase${RES}. (${BLD}default${RES}: merge)"
   printf "\n\t${YEL}-nc ${BLU}ou${YEL} --noconfirm${RES}   Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: do confirm)"
   printf "\n\t${YEL}-np ${BLU}ou${YEL} --nopop${RES}       Informa que um eventual stash será recuperado sem ${BLD}pop${RES} mas com ${BLD}apply${RES} ao final do processo. (${BLD}default${RES}: use pop)"
   printf "\n\t${YEL}-dp ${BLU}ou${YEL} --dopush${RES}      Indica que deve ser feito o ${BLD}push${RES} ao final do processo. (${BLD}default${RES}: no-push)"
@@ -90,10 +91,17 @@ NOPOP="NO"
 # Default para que cada comando seja executado com uma pausa antes (para debug)
 WITHPAUSE="NO"
 
+# Estratégia default é o merge
+STRATEGY="merge"
+
 #LOOP atraves dos parametros
 for i in "$@"
 do
   case $i in
+    -s=*|--strategy=*)
+    STRATEGY="${i#*=}"
+    shift
+    ;;
     -nc|--noconfirm)
     NOCONFIRM="YES"
     shift
@@ -130,8 +138,16 @@ if [ ! "$PARAMERROR" = "" ]; then
   exit -1
 fi
 
+if [ ! "$STRATEGY" == "merge" ] && [ ! "$STRATEGY" == "rebase" ]; then
+  printf "\n\n${RED}########  ERROR  #########${RES}\n"
+  printf "\n${YEL}INVALID STRATEGY ARGUMENT VALUE:${RES}"
+  printf "\n${BLD}${STRATEGY}${RES}\n"
+  printf "\n${GRE}Fix:${RES}${YEL} Use only${RES} rebase ${YEL}or${RES} merge${RES}\n\n\n"
+  exit -1
+fi
+
 if [ "$NOCONFIRM" = "NO" ]; then
-  printf "\n${YEL}Get master updates into your branch ${GRE}$__currentBranchName${RES}?\n\n"
+  printf "\n${YEL}Get ${GRE}master${YEL} updates into your branch ${GRE}$__currentBranchName${YEL} using ${GRE}${STRATEGY}${YEL} strategy?${RES}\n\n"
   read -p "Confirm? (Y/N) " ans_yn
   case "$ans_yn" in
   [Yy]|[Ss])
@@ -196,13 +212,13 @@ printf "\n${YEL}Going back to our working branch [${RES}git checkout ${GRE}$__cu
 pause "Press RETURN to continue or ^C to abort..."
 git checkout $__currentBranchName
 
-# 07 - Injeta na branch corrente as atualizações recebidas na master (git rebase master)
-printf "\n${YEL}Getting master updates into our working branch [${RES}git rebase ${GRE}master${YEL}]...${RES}\n"
+# 07 - Injeta na branch corrente as atualizações recebidas na master (git rebase/merge master)
+printf "\n${YEL}Getting master updates into our working branch [${RES}git ${STRATEGY} ${GRE}master${YEL}]...${RES}\n"
 pause "Press RETURN to continue or ^C to abort..."
-git rebase master
+git ${STRATEGY} master
 
 if [ "$?" -eq 1 ]; then
-	printf "\n${RED}Problem with the merge command bringing master changes!${RES}\n"
+	printf "\n${RED}Problem with the ${STRATEGY} command bringing master changes!${RES}\n"
 	exit $?
 fi
 
@@ -215,18 +231,16 @@ fi
 
 ## Check if it is needed to run the git stash pop command
 if [ $stashCount -gt 0 ]; then
-
-# 09 - Restaura as modificações pendentes da branch corrente (git stash pop)
-if [ "$NOPOP" = "NO" ]; then
-	printf "\n${YEL}Restoring work stashed with pop [${RES}git stash pop${YEL}]...${RES}\n"
-  pause "Press RETURN to continue or ^C to abort..."
-	git stash pop
-else
-	printf "\n${YEL}Restoring work stashed without popping it [${RES}git stash apply${YEL}]...${RES}\n"
-  pause "Press RETURN to continue or ^C to abort..."
-	git stash apply
-fi
-
+  # 09 - Restaura as modificações pendentes da branch corrente (git stash pop)
+  if [ "$NOPOP" = "NO" ]; then
+    printf "\n${YEL}Restoring work stashed with pop [${RES}git stash pop${YEL}]...${RES}\n"
+    pause "Press RETURN to continue or ^C to abort..."
+    git stash pop
+  else
+    printf "\n${YEL}Restoring work stashed without popping it [${RES}git stash apply${YEL}]...${RES}\n"
+    pause "Press RETURN to continue or ^C to abort..."
+    git stash apply
+  fi
 fi
 
 printf "\n\n${GRE}Done!${RES}\n"
