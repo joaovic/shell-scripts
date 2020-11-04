@@ -130,6 +130,12 @@ do
   esac
 done
 
+if [ -z "${BRANCH}" ]; then
+  printf "\n${RED}Please inform ${RES}${BLD}branch${RED} parameter!${RES}\n"
+  printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName}${BLD}-h${RES} or ${BLD}--help${RES}' ${YEL}for help.${RES}\n\n\n"
+  exit -1
+fi
+
 if [ ! "$PARAMERROR" = "" ]; then
   printf "\n\n${RED}########  ERROR  #########${RES}\n"
   printf "\n${YEL}INVALID ARGUMENT(S):${RES}"
