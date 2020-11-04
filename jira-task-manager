@@ -376,7 +376,7 @@ else
 fi
 
 if ! existBranch ${taskBranch}; then
-    printf "\n${YEL}Creating ${GRE}${task}${YEL} branch from ${GRE}master${YEL} branch${YEL}.${RES}\n"
+    printf "\n${YEL}Creating ${GRE}${taskBranch}${YEL} branch from ${GRE}master${YEL} branch${YEL}.${RES}\n"
     pause "Press RETURN to continue or ^C to abort..."
     git checkout -b ${taskBranch}
 fi
@@ -616,6 +616,17 @@ if [ "${MODE}" = "close" ]; then
     printf "\n${YEL}URL to existing PR: ${GRE}${generated_pr_url}${RES}\n\n"
 
     exit -1
+  fi
+
+  ## TRANSITION TASK TO "Review"
+  ## TODO: Checar o status se era 11 (Itens Pendentes) mesmo
+  printf "\n${YEL}Transitioning task ${GRE}${TASK}${YEL} to ${GRE}Review${RES}\n"
+  pause "Press RETURN to continue or ^C to abort..."
+  acli PicPay -a transitionIssue --issue ${TASK} --transition "71"
+
+  if [ "$?" -ne 0 ]; then
+    printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}\n"
+    exit 1
   fi
 
   ## Get issue ID to relate this PR to
