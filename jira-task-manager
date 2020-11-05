@@ -123,8 +123,37 @@ function getTaskLinkDescription(){
 
 function getPrIssueLinkDescription(){
   __issueId=${1}
-  __prIssueLinkDescription="closes #{__issueId}"
-	echo $__issueLinkDescripprIion
+
+  GITHUB_TEMPLATE_FILE=.github/pull_request_template.md
+
+  ## If we have pull request template file
+  if [ -n ${GITHUB_TEMPLATE_FILE} ]; then
+    __template=""
+    __input=${GITHUB_TEMPLATE_FILE}
+
+    ## Loop throught all file lines appending the new line caracter
+    while IFS= read -r __line
+    do
+      __template="${__template}${__line}\n"
+    done < $__input
+
+    ## Write the new string to a tmp file
+    echo -e "${__template}\n\ncloses #${__issueId}" > /tmp/msg
+
+    ## Get tmp file content with properly separated lines
+    __prIssueLinkText=$( cat /tmp/msg )
+  else
+    __prIssueLinkText="closes #${__issueId}"
+  fi
+
+  ## Append "See <TASK>" hyperlink
+  taskLinkText=$( getTaskLinkDescription )
+  echo -e "${__prIssueLinkText}\n\n${taskLinkText}" > /tmp/msg
+
+  ## Get description text with properly separated lines
+  __prIssueLinkDescription=$( cat /tmp/msg )
+
+	echo $__prIssueLinkDescription
 }
 
 ### FUNÇÃO QUE FAZ A LEITURA DE UM DADO DO UM ARQUIVO DE INFORMACOES DA TASK
@@ -172,50 +201,90 @@ function getName(){
 function createTaskFile() {
   echo "### TASK ${1} INFORMATION ###" > ${2}
   echo "" >> ${2}
-  echo "SUMMARY=$summary" >> ${2}
-  echo "ISSUE_KEY=$issue_key" >> ${2}
-  echo "PR_ISSUE_TITLE=$pr_issue_title" >> ${2}
-  echo "STATUS_ID=$status_id" >> ${2}
-  echo "STATUS_NAME=$status_name" >> ${2}
-  echo "TYPE_ID=$type_id" >> ${2}
-  echo "TYPE_NAME=$type_name" >> ${2}
-  echo "PRIORITY_ID=$priority_id" >> ${2}
-  echo "PRIORITY_NAME=$priority_name" >> ${2}
-  echo "ASSIGNEE_ID=$assignee_id" >> ${2}
-  echo "ASSIGNEE_NAME=$assignee_name" >> ${2}
-  echo "REPORTER_ID=$reporter_id" >> ${2}
-  echo "REPORTER_NAME=$reporter_name" >> ${2}
-  echo "CREATED_BY_USER_ID=$createdbyuser_id" >> ${2}
-  echo "CREATED_BY_USER_NAME=$createdbyuser_name" >> ${2}
-  echo "CREATED_DATE=$createddate" >> ${2}
-  echo "UPDATED_DATE=$updateddate" >> ${2}
-  echo "DESCRIPTION=$description" >> ${2}  
+  echo "SUMMARY:$summary" >> ${2}
+  echo "ISSUE_KEY:$issue_key" >> ${2}
+  echo "PR_ISSUE_TITLE:$pr_issue_title" >> ${2}
+  echo "STATUS_ID:$status_id" >> ${2}
+  echo "STATUS_NAME:$status_name" >> ${2}
+  echo "TYPE_ID:$type_id" >> ${2}
+  echo "TYPE_NAME:$type_name" >> ${2}
+  echo "PRIORITY_ID:$priority_id" >> ${2}
+  echo "PRIORITY_NAME:$priority_name" >> ${2}
+  echo "ASSIGNEE_ID:$assignee_id" >> ${2}
+  echo "ASSIGNEE_NAME:$assignee_name" >> ${2}
+  echo "REPORTER_ID:$reporter_id" >> ${2}
+  echo "REPORTER_NAME:$reporter_name" >> ${2}
+  echo "CREATED_BY_USER_ID:$createdbyuser_id" >> ${2}
+  echo "CREATED_BY_USER_NAME:$createdbyuser_name" >> ${2}
+  echo "CREATED_DATE:$createddate" >> ${2}
+  echo "UPDATED_DATE:$updateddate" >> ${2}
+  echo "DESCRIPTION:$description" >> ${2}
+}
+
+function initializeTaskVariables() {
+  summary=$( readFileInfo ${TASKFILECACHE} "Summary" )
+  issue_key=$( readFileInfo ${TASKFILECACHE} "Issue key" )
+  pr_issue_title=$( getPrIssueTitleFromSummary "${summary}" )
+  type=$( readFileInfo ${TASKFILECACHE} "Type" )
+  jira_status=$( readFileInfo ${TASKFILECACHE} "Status" )
+  priority=$( readFileInfo ${TASKFILECACHE} "Priority" )
+  assignee=$( readFileInfo ${TASKFILECACHE} "Assignee" )
+  reporter=$( readFileInfo ${TASKFILECACHE} "Reporter" )
+  createdbyuser=$( readFileInfo ${TASKFILECACHE} "Created by user" )
+  priority=$( readFileInfo ${TASKFILECACHE} "Priority" )
+  createddate=$( readFileInfo ${TASKFILECACHE} "Created ." "DATE" )
+  updateddate=$( readFileInfo ${TASKFILECACHE} "Updated ." "DATE" )
+  description=$( readFileInfo ${TASKFILECACHE} "Description" "DESC" )
+
+  ## INITIALIZE ID & NAME VARIABLES
+  status_id=$( getId "${jira_status}" )
+  status_name=$( getName "${jira_status}" )
+  type_id=$( getId "${type}" )
+  type_name=$( getName "${type}" )
+  priority_id=$( getId "${priority}" )
+  priority_name=$( getName "${priority}" )
+  assignee_id=$( getId "${assignee}" )
+  assignee_name=$( getName "${assignee}" )
+  reporter_id=$( getId "${reporter}" )
+  reporter_name=$( getName "${reporter}" )
+  createdbyuser_id=$( getId "${createdbyuser}" )
+  createdbyuser_name=$( getName "${createdbyuser}" )
 }
 
 function createUserFile() {
   echo "### USER ${1} INFORMATION ###" > ${2}
   echo "" >> ${2}
-  echo "USER_ID=$user_id" >> ${2}
-  echo "USER_KEY=$user_key" >> ${2}
-  echo "USER_NAME=$user_fullname" >> ${2}
-  echo "USER_EMAIL=$user_email" >> ${2}
-  echo "USER_URL=$user_url" >> ${2}
-  echo "USER_AVATAR=$user_avatar" >> ${2}
-  echo "USER_ACTIVE=$user_active" >> ${2}
+  echo "USER_ID:$user_id" >> ${2}
+  echo "USER_KEY:$user_key" >> ${2}
+  echo "USER_NAME:$user_fullname" >> ${2}
+  echo "USER_EMAIL:$user_email" >> ${2}
+  echo "USER_URL:$user_url" >> ${2}
+  echo "USER_AVATAR:$user_avatar" >> ${2}
+  echo "USER_ACTIVE:$user_active" >> ${2}
+}
+
+function initializeUserVariables() {
+  user_id=$( readFileInfo ${USERFILECACHE} "User id" )
+  user_key=$( readFileInfo ${USERFILECACHE} "User key" )
+  user_fullname=$( readFileInfo ${USERFILECACHE} "Full name" )
+  user_email=$( readFileInfo ${USERFILECACHE} "Email" )
+  user_url=$( readFileInfo ${USERFILECACHE} "URL . ." "FIRST" )
+  user_avatar=$( readFileInfo ${USERFILECACHE} "Avatar URL" "FIRST" )
+  user_active=$( readFileInfo ${USERFILECACHE} "Active" )
 }
 
 function createIssueFile() {
   echo "### ISSUE ${1} INFORMATION ###" > ${2}
   echo "" >> ${2}
-  echo "ISSUE_ID=${3}" >> ${2}
-  echo "ISSUE_URL=${4}" >> ${2}
+  echo "ISSUE_ID:${3}" >> ${2}
+  echo "ISSUE_URL:${4}" >> ${2}
 }
 
 function createPullRequestFile() {
   echo "### PR ${1} INFORMATION ###" > ${2}
   echo "" >> ${2}
-  echo "PR_ID=${3}" >> ${2}
-  echo "PR_URL=${4}" >> ${2}
+  echo "PR_ID:${3}" >> ${2}
+  echo "PR_URL:${4}" >> ${2}
 }
 
 function lowerCase() {
@@ -244,6 +313,44 @@ function getGitConfigParam() {
   fi
 
   echo "${__git_config_value}"
+}
+
+function loadJiraUserInfo() {
+  jira_user_id=$( getGitConfigParam user.jira-id true )
+  if [ -z "${jira_user_id}" ]; then
+    if [ "$FORCEUPDATE" = "NO" ]; then
+      printf "\n${YEL}Please, configure a valid ${GRE}user.jira-id${YEL} on your git config file!${RES}\n"
+      printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
+      exit -1
+    fi
+  fi
+
+  jira_user_key=$( getGitConfigParam user.jira-key true )
+  if [ -z "${jira_user_key}" ]; then
+    if [ "$FORCEUPDATE" = "NO" ]; then
+      printf "\n${YEL}Please, configure a valid ${GRE}user.jira-key${YEL} on your git config file!${RES}\n"
+      printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
+      exit -1
+    fi
+  fi
+
+  jira_user_email=$( getGitConfigParam user.jira-email true )
+  if [ -z "${jira_user_email}" ]; then
+    if [ "$FORCEUPDATE" = "NO" ]; then
+      printf "\n${YEL}Please, configure a valid ${GRE}user.jira-email${YEL} on your git config file!${RES}\n"
+      printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
+      exit -1
+    fi
+  fi
+
+  jira_user_name=$( getGitConfigParam user.jira-name true )
+  if [ -z "${jira_user_name}" ]; then
+    if [ "$FORCEUPDATE" = "NO" ]; then
+      printf "\n${YEL}Please, configure a valid ${GRE}user.jira-name${YEL} on your git config file!${RES}\n"
+      printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
+      exit -1
+    fi
+  fi
 }
 
 # Default para que seja a PR seja criada em modo draft
@@ -313,6 +420,7 @@ if [ -z "${MODE}" ]; then
   exit -1
 else
   MODE=$( lowerCase ${MODE} )
+
   if [[ ! "${MODE}" = "create" && ! "${MODE}" = "close" ]]; then
     printf "\n${BLD}MODE${RED} parameter accepts only ${RES}${BLD}create${RED} or ${RES}${BLD}close${RED} values!${RES}\n"
     printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName}${BLD}-h${RES} or ${BLD}--help${RES}' ${YEL}for help.${RES}\n\n\n"
@@ -320,6 +428,7 @@ else
   fi
 fi
 
+## CHECK TASK IS CORRECT
 if [ -z "${TASK}" ]; then
   printf "\n${RED}Please inform ${RES}${BLD}task${RED} parameter!${RES}\n"
   printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName}${BLD}-h${RES} or ${BLD}--help${RES}' ${YEL}for help.${RES}\n\n\n"
@@ -392,46 +501,14 @@ if ! existBranch ${taskBranch}; then
     git checkout -b ${taskBranch}
 fi
 
+## LOAD GITHUB USER INFO
 github_user_name=$( getGitConfigParam user.name )
-
 github_user_email=$( getGitConfigParam user.email )
 
-jira_user_id=$( getGitConfigParam user.jira-id true )
-if [ -z "${jira_user_id}" ]; then
-  if [ "$FORCEUPDATE" = "NO" ]; then
-    printf "\n${YEL}Please, configure a valid ${GRE}user.jira-id${YEL} on your git config file!${RES}\n"
-    printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
-    exit -1
-  fi
-fi
+## LOAD JIRA USER INFO
+loadJiraUserInfo
 
-jira_user_key=$( getGitConfigParam user.jira-key true )
-if [ -z "${jira_user_key}" ]; then
-  if [ "$FORCEUPDATE" = "NO" ]; then
-    printf "\n${YEL}Please, configure a valid ${GRE}user.jira-key${YEL} on your git config file!${RES}\n"
-    printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
-    exit -1
-  fi
-fi
-
-jira_user_email=$( getGitConfigParam user.jira-email true )
-if [ -z "${jira_user_email}" ]; then
-  if [ "$FORCEUPDATE" = "NO" ]; then
-    printf "\n${YEL}Please, configure a valid ${GRE}user.jira-email${YEL} on your git config file!${RES}\n"
-    printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
-    exit -1
-  fi
-fi
-
-jira_user_name=$( getGitConfigParam user.jira-name true )
-if [ -z "${jira_user_name}" ]; then
-  if [ "$FORCEUPDATE" = "NO" ]; then
-    printf "\n${YEL}Please, configure a valid ${GRE}user.jira-name${YEL} on your git config file!${RES}\n"
-    printf "\n${YEL}Hint: ${GRE}Use ${RES}${BLD}--force-update ${RES}${GRE}parameter to genarate it!${RES}\n\n"
-    exit -1
-  fi
-fi
-
+## CHOOSE USER NAME TO USE FROM NOW ON
 if [ -z "${jira_user_name}" ]; then
   user_name=${github_user_name}
 else
@@ -439,7 +516,7 @@ else
 fi
 
 ## GENERATE CACHE FILE IF NEEDED
-if [ "$FORCEUPDATE" = "YES" ]; then
+if [[ "$FORCEUPDATE" = "YES" || "${MODE}" = "create" ]]; then
   printf "\n${YEL}Fetching task ${GRE}${TASK}${YEL} information on project ${GRE}${PROJECT}${YEL}.${RES}\n"
   $( getProjectData ${PROJECT} ${TASK} ${TASKFILECACHE} )
 
@@ -448,53 +525,55 @@ if [ "$FORCEUPDATE" = "YES" ]; then
     exit -1
   fi
 
-  printf "\n${YEL}Fetching user ${GRE}${user_name}${YEL} information${YEL}.${RES}\n"
-  $( getUserInformation "${user_name}" ${USERFILECACHE} )
-  
-  if [ "$?" -ne 0 ]; then
-    printf "\n${RED}Problem fetching user information for user name ${GRE}${user_name}${RED}!${RES}\n"
-    printf "\n${YEL}Hint: ${GRE}Check the value for '${RES}user.name${GRE}' on your git config file${RES}\n"
-    exit -1
-  fi
+  if [ "$FORCEUPDATE" = "YES" ]; then
+    printf "\n${YEL}Fetching user ${GRE}${user_name}${YEL} information${YEL}.${RES}\n"
+    $( getUserInformation "${user_name}" ${USERFILECACHE} )
 
-  ## READ FILE INFO DATA AND STORE ON GIT CONFIG FILE
-  if [ -z "${jira_user_id}" ]; then
-    jira_user_id=$( readFileInfo ${USERFILECACHE} "User id" )
-
-    if [ -n "${jira_user_id}" ]; then
-      printf "\n${YEL}Updating Jira User Id ${GRE}${jira_user_id}${YEL} to your git config file${YEL}.${RES}\n"
-      $( git config --global user.jira-id "${jira_user_id}" | xargs -0 )
-    fi    
-  fi
-
-  if [ -z "${jira_user_key}" ]; then
-    jira_user_key=$( readFileInfo ${USERFILECACHE} "User key" )
-
-    if [ -n "${jira_user_key}" ]; then
-      printf "\n${YEL}Updating Jira User Key ${GRE}${jira_user_key}${YEL} to your git config file${YEL}.${RES}\n"
-      $( git config --global user.jira-key "${jira_user_key}" | xargs -0 )
+    if [ "$?" -ne 0 ]; then
+      printf "\n${RED}Problem fetching user information for user name ${GRE}${user_name}${RED}!${RES}\n"
+      printf "\n${YEL}Hint: ${GRE}Check the value for '${RES}user.name${GRE}' on your git config file${RES}\n"
+      exit -1
     fi
-  fi
 
-  if [ -z "${jira_user_name}" ]; then
-    jira_user_name=$( readFileInfo ${USERFILECACHE} "Full name" )
+    ## READ FILE INFO DATA AND STORE ON GIT CONFIG FILE
+    if [ -z "${jira_user_id}" ]; then
+      jira_user_id=$( readFileInfo ${USERFILECACHE} "User id" )
 
-    if [ -n "${jira_user_name}" ]; then
-      printf "\n${YEL}Updating Jira User Name ${GRE}${jira_user_name}${YEL} to your git config file${YEL}.${RES}\n"
-      $( git config --global user.jira-name "${jira_user_name}" | xargs -0 )
+      if [ -n "${jira_user_id}" ]; then
+        printf "\n${YEL}Updating Jira User Id ${GRE}${jira_user_id}${YEL} to your git config file${YEL}.${RES}\n"
+        $( git config --global user.jira-id "${jira_user_id}" | xargs -0 )
+      fi
     fi
-  fi
 
-  if [ -z "${jira_user_email}" ]; then
-    jira_user_email=$( readFileInfo ${USERFILECACHE} "Email" )
+    if [ -z "${jira_user_key}" ]; then
+      jira_user_key=$( readFileInfo ${USERFILECACHE} "User key" )
 
-    if [ -n "${jira_user_email}" ]; then
-      printf "\n${YEL}Updating Jira User Email ${GRE}${jira_user_email}${YEL} to your git config file${YEL}.${RES}\n"
-      $( git config --global user.jira-email "${jira_user_email}" | xargs -0 )
+      if [ -n "${jira_user_key}" ]; then
+        printf "\n${YEL}Updating Jira User Key ${GRE}${jira_user_key}${YEL} to your git config file${YEL}.${RES}\n"
+        $( git config --global user.jira-key "${jira_user_key}" | xargs -0 )
+      fi
     fi
-  fi
 
-  printf "\n${YEL}Cached data updated!${RES}\n\n"
+    if [ -z "${jira_user_name}" ]; then
+      jira_user_name=$( readFileInfo ${USERFILECACHE} "Full name" )
+
+      if [ -n "${jira_user_name}" ]; then
+        printf "\n${YEL}Updating Jira User Name ${GRE}${jira_user_name}${YEL} to your git config file${YEL}.${RES}\n"
+        $( git config --global user.jira-name "${jira_user_name}" | xargs -0 )
+      fi
+    fi
+
+    if [ -z "${jira_user_email}" ]; then
+      jira_user_email=$( readFileInfo ${USERFILECACHE} "Email" )
+
+      if [ -n "${jira_user_email}" ]; then
+        printf "\n${YEL}Updating Jira User Email ${GRE}${jira_user_email}${YEL} to your git config file${YEL}.${RES}\n"
+        $( git config --global user.jira-email "${jira_user_email}" | xargs -0 )
+      fi
+    fi
+
+    printf "\n${YEL}Cached data updated!${RES}\n\n"
+  fi
 fi
 
 ## CHECK TASK CACHE FILE PRESENT
@@ -513,52 +592,25 @@ if [ ! -s ${USERFILECACHE} ]; then
   exit -1
 fi
 
-## READ FILE INFO DATA
-summary=$( readFileInfo ${TASKFILECACHE} "Summary" )
-issue_key=$( readFileInfo ${TASKFILECACHE} "Issue key" )
-pr_issue_title=$( getPrIssueTitleFromSummary "${summary}" )
-type=$( readFileInfo ${TASKFILECACHE} "Type" )
-jira_status=$( readFileInfo ${TASKFILECACHE} "Status" )
-priority=$( readFileInfo ${TASKFILECACHE} "Priority" )
-assignee=$( readFileInfo ${TASKFILECACHE} "Assignee" )
-reporter=$( readFileInfo ${TASKFILECACHE} "Reporter" )
-createdbyuser=$( readFileInfo ${TASKFILECACHE} "Created by user" )
-priority=$( readFileInfo ${TASKFILECACHE} "Priority" )
-createddate=$( readFileInfo ${TASKFILECACHE} "Created ." "DATE" )
-updateddate=$( readFileInfo ${TASKFILECACHE} "Updated ." "DATE" )
-description=$( readFileInfo ${TASKFILECACHE} "Description" "DESC" )
+## INITIALOIZA FILE INFO VARIABLES
+initializeTaskVariables
 
-## INITIALIZE ID & NAME VARIABLES
-status_id=$( getId "${jira_status}" )
-status_name=$( getName "${jira_status}" )
-type_id=$( getId "${type}" )
-type_name=$( getName "${type}" )
-priority_id=$( getId "${priority}" )
-priority_name=$( getName "${priority}" )
-assignee_id=$( getId "${assignee}" )
-assignee_name=$( getName "${assignee}" )
-reporter_id=$( getId "${reporter}" )
-reporter_name=$( getName "${reporter}" )
-createdbyuser_id=$( getId "${createdbyuser}" )
-createdbyuser_name=$( getName "${createdbyuser}" )
-
-## CREATE TASK TXT FILE
-$( createTaskFile ${TASK} ${TASKFILETEXT} )
+## CREATE TASK TXT FILE IF NOT EXIST
+if [ ! -s ${TASKFILETEXT} ]; then
+  $( createTaskFile ${TASK} ${TASKFILETEXT} )
+fi
 
 ## INITIALIZE USER VARIABLES
-user_id=$( readFileInfo ${USERFILECACHE} "User id" )
-user_key=$( readFileInfo ${USERFILECACHE} "User key" )
-user_fullname=$( readFileInfo ${USERFILECACHE} "Full name" )
-user_email=$( readFileInfo ${USERFILECACHE} "Email" )
-user_url=$( readFileInfo ${USERFILECACHE} "URL . ." "FIRST" )
-user_avatar=$( readFileInfo ${USERFILECACHE} "Avatar URL" "FIRST" )
-user_active=$( readFileInfo ${USERFILECACHE} "Active" )
+initializeUserVariables
 
-## CREATE USER TXT FILE
-$( createUserFile "${user_name}" ${USERFILETEXT} )
+## CREATE USER TXT FILE IF NOT EXIST
+if [ ! -s ${TASKFILETEXT} ]; then
+  $( createUserFile "${user_name}" ${USERFILETEXT} )
+fi
 
 ## ASSIGN TASK TO THE USER
 if [ ! "${assignee_id}" = "${user_key}" ]; then
+
   if [[ "${FORCEREASSIGN}" = "NO" && -n "${assignee_id}" ]]; then
     printf "\n${RED}Task ${RES}${TASK}${RED} already assigned to user ${RES}${assignee_name}${RED}!${RES}\n"
     printf "\n${YEL}Hint: ${GRE}Use ${RES}--force-reassign ${GRE}parameter!${RES}\n"
@@ -575,10 +627,21 @@ if [ ! "${assignee_id}" = "${user_key}" ]; then
     printf "\n${RED}Problem assigning issue ${BLD}${TASK}${RED} to ${BLD}${user_id}${RED}!${RES}\n"
     exit -1
   fi
+
+  printf "\n${YEL}Fetching updated task ${GRE}${TASK}${YEL} information on project ${GRE}${PROJECT}${YEL}.${RES}\n"
+  $( getProjectData ${PROJECT} ${TASK} ${TASKFILECACHE} )
+
+  if [ "$?" -ne 0 ]; then
+    printf "\n${RED}Problem fetching updated projet information for project ${GRE}${PROJECT}${RED} and task ${GRE}${TASK}${RED}!${RES}\n"
+    exit -1
+  fi
+
+  initializeTaskVariables
 fi
 
 ## MODE EQUALS CREATE
 if [ "${MODE}" = "create" ]; then
+
   ## TRANSITION TASK TO "EM ANDAMENTO"
   ## TODO: Checar o status se era 11 (Itens Pendentes) mesmo
   printf "\n${YEL}Transitioning task ${GRE}${TASK}${YEL} to ${GRE}Em andamento${RES}\n"
@@ -587,7 +650,7 @@ if [ "${MODE}" = "create" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}\n"
-    exit 1
+    exit -1
   fi
 
   github_user_login=$( readFileInfo ${GITHUB_CLI_CONFIG} "user" )
@@ -599,11 +662,18 @@ if [ "${MODE}" = "create" ]; then
   pause "Press RETURN to continue or ^C to abort..."
   gh issue create --title "${pr_issue_title}" --body "${task_link_description}" --assignee ${github_user_login} --repo PicPay/${github_project_repo}
 
+  if [ "$?" -ne 0 ]; then
+    printf "\n${RED}Problem creating issue for task ${RES}${BLD}${TASK}${RED}!${RES}\n"
+    exit -1
+  fi
+
   generated_issue_id=$( gh issue list | grep ${TASK} | awk '{print $1}' )
   generated_issue_url="https://github.com/PicPay/${github_project_repo}/issues/${generated_issue_id}"
 
   ## CREATE ISSUER TXT FILE
   $( createIssueFile ${TASK} ${ISSUEFILETEXT} ${generated_issue_id} ${generated_issue_url} )
+
+  printf "\n${GRE}Done!${RES}\n\n"
 fi
 
 ## MODE EQUALS CLOSE
@@ -619,7 +689,7 @@ if [ "${MODE}" = "close" ]; then
   if [ -s ${PRFILETEXT} ]; then
     printf "\n${RED}File containing the ${RES}${BLD}TASK PR${RED} already exists!${RES}"
     printf "\n${RES}('${PRFILETEXT}' already exist!)${RES}\n"
-    printf "\n${YEL}Hint: ${GRE}Maybe you already created the pull request file${RES}\n"
+    printf "\n${YEL}Hint: ${GRE}Maybe you already have created the pull request${RES}\n"
 
     generated_pr_id=$( readFileInfo ${PRFILETEXT} "PR_ID" )
     generated_pr_url=$( readFileInfo ${PRFILETEXT} "PR_URL" )
@@ -637,8 +707,11 @@ if [ "${MODE}" = "close" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}\n"
-    exit 1
+    exit -1
   fi
+
+  github_user_login=$( readFileInfo ${GITHUB_CLI_CONFIG} "user" )
+  github_project_repo=${PWD##*/}
 
   ## Get issue ID to relate this PR to
   generated_issue_id=$( readFileInfo ${ISSUEFILETEXT} "ISSUE_ID" )
@@ -654,11 +727,17 @@ if [ "${MODE}" = "close" ]; then
     gh pr create --draft --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo PicPay/${github_project_repo}
   fi
   
+  if [ "$?" -ne 0 ]; then
+    printf "\n${RED}Problem creating pull request for task ${RES}${BLD}${TASK}${RED}!${RES}\n"
+    exit -1
+  fi
+
   generated_pr_id=$( gh pr list | grep ${TASK} | awk '{print $1}' )
   generated_pr_url="https://github.com/PicPay/${github_project_repo}/pull/${generated_pr_id}"
 
   ## CREATE PULL REQUEST TXT FILE
   $( createPullRequestFile ${TASK} ${PRFILETEXT} ${generated_pr_id} ${generated_pr_url} )
+
+  printf "\n${GRE}Done!${RES}\n\n"
+
 fi
-
-
