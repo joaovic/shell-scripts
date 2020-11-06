@@ -18,40 +18,46 @@ function showHelp {
   clear
   printf "\n${YEL}JIRA TASK MANAGER${RES}\n"
   printf "\n"
-  printf "\n${BLU}Realiza uma abstração da task do Jira criando uma Issue e um Pull Request de forma automática${RES}\n"
+  printf "\n${BLU}Realiza uma abstração da task do Jira criando uma issue e um pull request de forma automática${RES}\n"
   printf "O script identifica seu usuário Jira com base no valor da propriedade 'user.name' do seu '~/.gitconfig'\n"
   printf "Caso não encontre, pode ser definido manualmente com os comandos abaixo: \n\n"
   printf " > git config --global user.jira-id \"<SEU ID NO JIRA>\"\n"
   printf " > git config --global user.jira-name \"<SEU NOME NO JIRA>\"\n"
   printf " > git config --global user.jira-email \"<SEU EMAIL NO JIRA>\"\n"
   printf "\n"
-  printf "\n${YEL}Cenários${RES}\n"
+  printf "\n${YEL}Cenário de Utilização${RES}\n"
   printf "\n"
-  printf "1) O desenvolvedor deseja inciar o desenvolvimento da tarefa PCR-999 do Jira\n"
+  printf "${ORA}1)${RES} O desenvolvedor deseja inciar o desenvolvimento da tarefa PCR-999 do Jira:\n"
   printf "\n"
-  printf "${RED}> ${DBL}jira-task-manager${RES} -m=${YEL}create${RES} -t=${YEL}PCR-999${RES}\n"
-  printf "\nO script vai vincular a tarefa ao usuário e passar seu status para 'Em Andamento'"
-  printf "\nAlém disso, vai criar uma Issue no Github e colocar na sua descrição um vinculo com a tarefa do Jira\n"
+  printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}--mode${BLD}=${YEL}create${RES} ${BLU}--task${BLD}=${YEL}PCR-999${RES}\n"
+  printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}-m${BLD}=${YEL}create${RES} ${BLU}-t${BLD}=${YEL}PCR-999${RES}\n"
+  printf "\n\tO script vai vincular a tarefa ao usuário e passar seu status para 'Em Andamento',"
+  printf "\n\tem seguida, vai criar uma issue no Github e fazer um vínculo com a tarefa de origem no Jira.\n"
   printf "\n"
-  printf "2) O desenvolvedor deseja concluir o desenvolvimento da tarefa PCR-999 do Jira\n"
+  printf "${ORA}2)${RES} O desenvolvedor deseja concluir o desenvolvimento da tarefa PCR-999 do Jira:\n"
   printf "\n"
-  printf "${RED}> ${DBL}jira-task-manager${RES} -m=${YEL}close${RES} -t=${YEL}PCR-999${RES}\n"
-  printf "\nO script vai passar a tarefa para o status 'Em Review'\n"
-  printf "\nAlém disso, vai criar uma Pull Request no Github e colocar na sua descrição um vínculo com a Issue"
-  printf "\nde modo que ao concluir o Pull Request, a Issue vinculada seja automaticamente fechada."
+  printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}--mode${BLD}=${YEL}close${RES} ${BLU}--task${BLD}=${YEL}PCR-999${RES}\n"
+  printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}-m${BLD}=${YEL}close${RES} ${BLU}-t${BLD}=${YEL}PCR-999${RES}\n"
+  printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}-m${BLD}=${YEL}close${RES} (se não informar a task, será usado o nome da branch)\n"
+  printf "\n\tO script vai passar a tarefa para o status 'Em Review',"
+  printf "\n\tem seguida, vai criar um pull request no Github e fazer um vínculo com a issue"
+  printf "\n\tde modo que ao concluir o pull request, a issue vinculada seja automaticamente fechada."
+  printf "\n"
+  printf "\nOBS: Caso não seja informado a task a ser fechada, o script utiliza o nome da branch corrente.\n"
   printf "\n"
   printf "\n${BLD}UTILIZAÇÃO${RES}\n"
-  printf "\n${RED}> ${DBL}$(basename ${0}) ${BLU}--mode${BLD}=${YEL}create${RES}${BLD}|${YEL}close${RES} ${BLU}--task${BLD}=${RES}${BLD}<${YEL}task-code${RES}${BLD}>${RES}\n"
+  printf "\n${RED}> ${DBL}$(basename ${0}) ${BLU}-m${BLD}=${YEL}create${RES}${BLD}|${YEL}close${RES} ${BLU}-t${BLD}=${RES}${BLD}<${YEL}task-code${RES}${BLD}>${RES}"
+  printf " ${BLU}-nd${RES} ${BLU}-nc${RES} ${BLU}-fu${RES} ${BLU}-fr${RES} ${BLU}-wp${RES} ${BLU}-h${RES}\n"
   printf "\n"
   printf "\n${BLD}ARGUMENTOS:${RES}\n"
-  printf "\n\t${YEL}-m  ${BLU}ou${YEL} --mode${RES}           Se inicia (create) ou concluir (close) o desenvolvimento da task. Valid values: [create|close] . (${BLD}obrigatório${RES})"
-  printf "\n\t${YEL}-t  ${BLU}ou${YEL} --task${RES}           O código da task a ser utilizada. (${BLD}obrigatório${RES})"
-  printf "\n\t${YEL}-nd ${BLU}ou${YEL} --no-draft${RES}       Indica para criar a PR sem passar pelo modo 'draft'. (${BLD}default${RES}: draft pr mode)"
-  printf "\n\t${YEL}-nc ${BLU}ou${YEL} --no-confirm${RES}     Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
-  printf "\n\t${YEL}-fu ${BLU}ou${YEL} --force-update${RES}   Força a recuperação dos dados da task mesmo existindo no cache. (${BLD}default${RES}: use cache)"
-  printf "\n\t${YEL}-fr ${BLU}ou${YEL} --force-reassign${RES} Força a reassociação de uma task já vinculada a um outro usuário. (${BLD}default${RES}: no reassign)"
-  printf "\n\t${YEL}-wp ${BLU}ou${YEL} --with-pause${RES}     Uma pausa antes execução de cada comando. (${BLD}default${RES}: no pause)"
-  printf "\n\t${YEL}-h  ${BLU}ou${YEL} --help${RES}           Exibe esta ajuda."
+  printf "\n\t${YEL}-m  ${BLU}ou${YEL} --mode${RES}           Iniciar ou concluir o desenvolvimento de uma task. Valores: [create|close]. (${BLD}obrigatório${RES})"
+  printf "\n\t${YEL}-t  ${BLU}ou${YEL} --task${RES}           O código da task a ser utilizada. (${BLD}obrigatório${RES} para iniciar uma task, ${BLD}opcional${RES} ao concluir${RES})"
+  printf "\n\t${ORA}-nd ${BLU}ou${ORA} --no-draft${RES}       Indica para criar a PR sem passar pelo modo 'draft'. (${BLD}default${RES}: draft pr mode)"
+  printf "\n\t${ORA}-nc ${BLU}ou${ORA} --no-confirm${RES}     Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
+  printf "\n\t${ORA}-fu ${BLU}ou${ORA} --force-update${RES}   Força a recuperação dos dados da task mesmo existindo no cache. (${BLD}default${RES}: use cache)"
+  printf "\n\t${ORA}-fr ${BLU}ou${ORA} --force-reassign${RES} Força a reassociação de uma task já vinculada a um outro usuário. (${BLD}default${RES}: no reassign)"
+  printf "\n\t${ORA}-wp ${BLU}ou${ORA} --with-pause${RES}     Uma pausa antes execução de cada comando. (${BLD}default${RES}: no pause)"
+  printf "\n\t${ORA}-h  ${BLU}ou${ORA} --help${RES}           Exibe esta ajuda."
   printf "\n"
   printf "\n"
   printf "\n${BLD}PRÉ-REQUISITOS:${RES}\n"
@@ -66,14 +72,14 @@ function showHelp {
   printf "\n"
   printf "\n"
   printf "\n${BLD}DICAS:${RES}\n"
-  printf "\n\t${YEL}Coloque no path a pasta contendo o script${RES}:"
-  printf "\n\t${DBL}export ${BLD}PATH${RES}=\"${BLU}\$HOME${ORA}/tools/shell-scripts/${RES}:${BLU}\$PATH${RES}\"\n"
+  printf "\n\t${ORA}Coloque no path a pasta contendo o script${RES}:"
+  printf "\n\t${RED}> ${DBL}export ${BLD}PATH${RES}=\"${BLU}\$HOME${ORA}/tools/shell-scripts/${RES}:${BLU}\$PATH${RES}\"\n"
   printf "\n"
-  printf "\n\t${YEL}Crie um ${UND}alias${RES}${YEL} para cada ${ORA}modo${RES}${YEL} de execução do script${RES}:"
-  printf "\n\t${ORA}alias${YEL} gjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}create${RES}\" // alias for: get-jira-task"
-  printf "\n\t${ORA}alias${YEL} cjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}close${RES}\"  // alias for: close-jira-task"
+  printf "\n\t${ORA}Crie um ${UND}alias${RES}${ORA} para cada ${YEL}modo${RES}${ORA} de execução do script${RES}:"
+  printf "\n\t${RED}> ${ORA}alias${YEL} gjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}create${RES}\" // alias for: get-jira-task"
+  printf "\n\t${RED}> ${ORA}alias${YEL} cjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}close${RES}\"  // alias for: close-jira-task"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.2${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.3${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -223,7 +229,7 @@ function createTaskFile() {
 
 function initializeTaskVariables() {
   summary=$( readFileInfo ${TASKFILECACHE} "Summary" )
-  issue_key=$( readFileInfo ${TASKFILECACHE} "Issue key" )
+  issue_key=$( readFileInfo ${TASKFILECACHE} "issue key" )
   pr_issue_title=$( getPrIssueTitleFromSummary "${summary}" )
   type=$( readFileInfo ${TASKFILECACHE} "Type" )
   jira_status=$( readFileInfo ${TASKFILECACHE} "Status" )
@@ -428,14 +434,22 @@ else
   fi
 fi
 
-## CHECK TASK IS CORRECT
-if [ -z "${TASK}" ]; then
+## CHECK TASK: REQUIRED IF MODE == CREATE 
+if [[ -z "${TASK}" && "${MODE}" = "create" ]]; then
   printf "\n${RED}Please inform ${RES}${BLD}task${RED} parameter!${RES}\n"
   printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName}${BLD}-h${RES} or ${BLD}--help${RES}' ${YEL}for help.${RES}\n\n\n"
   exit -1
-else
-  TASK=$( upperCase ${TASK} )
 fi
+
+# Recupera o nome da branch corrente no git
+currentBranchName=$( getCurrentBranchName )
+
+## CHECK TASK: IF MODE == CLOSE THEN USE BRANCH NAME 
+if [[ -z "${TASK}" && "${MODE}" = "close" ]]; then
+  TASK="${currentBranchName}"
+fi
+
+TASK=$( upperCase ${TASK} )
 
 if [ ! "$PARAMERROR" = "" ]; then
   printf "\n\n${RED}########  ERROR  #########${RES}\n"
@@ -472,8 +486,6 @@ fi
 onMasterBranch=false
 onTaskBranch=false
 
-# Recupera o nome da branch corrente no git
-currentBranchName=$( getCurrentBranchName )
 taskBranch=$( lowerCase ${TASK} )
 
 if [ "${currentBranchName}" = "master" ]; then
