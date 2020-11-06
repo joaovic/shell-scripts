@@ -79,7 +79,10 @@ function showHelp {
   printf "\n\t${RED}> ${ORA}alias${YEL} gjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}create${RES}\" // alias for: get-jira-task"
   printf "\n\t${RED}> ${ORA}alias${YEL} cjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}close${RES}\"  // alias for: close-jira-task"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.3${RES}"
+  printf "\nOBS: Se utiliza o ${ORA}zshell${RES} coloque isso no seu arquivo ${ORA}~/.zshrc${RES}\n"
+  printf "\nOBS: Se utiliza o ${ORA}bash${RES} coloque isso no seu arquivo ${ORA}~/.bashrc${RES}\n"
+  printf "\n"
+  printf "\n${BLD}VERSAO: ${RES}0.4${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -446,7 +449,13 @@ currentBranchName=$( getCurrentBranchName )
 
 ## CHECK TASK: IF MODE == CLOSE THEN USE BRANCH NAME 
 if [[ -z "${TASK}" && "${MODE}" = "close" ]]; then
-  TASK="${currentBranchName}"
+  if [ ! "${currentBranchName}" = "master" ]; then
+    TASK="${currentBranchName}"
+  else
+    printf "\n${RED}You're on ${RES}${BLD}master${RED} branch, please inform the ${RES}${BLD}task${RED} parameter!${RES}\n"
+    printf "\n${GRE}Tip:${RES}${YEL} Use${RES} '${__fileName}${BLD}-h${RES} or ${BLD}--help${RES}' ${YEL}for help.${RES}\n\n\n"
+    exit -1
+  fi
 fi
 
 TASK=$( upperCase ${TASK} )
