@@ -96,7 +96,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.5${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.6${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -515,7 +515,7 @@ if [ "${currentBranchName}" = "master" ]; then
   onMasterBranch=true
 fi
 
-if [ "${currentBranchName}" = "${taskBranch}" ]; then
+if [[ "${currentBranchName}" = "${taskBranch}" || "${currentBranchName}" = "${taskBranch}-tmp" ]]; then
   onTaskBranch=true
 fi
 
@@ -530,11 +530,13 @@ else
   fi
 fi
 
-if ! existBranch ${taskBranch}; then
-    printf "\n${YEL}Creating ${GRE}${taskBranch}${YEL} branch from ${GRE}master${YEL} branch${YEL}.${RES}\n"
-    pause "Press RETURN to continue or ^C to abort..."
-    git checkout -b ${taskBranch}
-fi
+if [ "${onTaskBranch}" = "false" ]; then
+  if ! existBranch ${taskBranch}; then
+      printf "\n${YEL}Creating ${GRE}${taskBranch}${YEL} branch from ${GRE}master${YEL} branch${YEL}.${RES}\n"
+      pause "Press RETURN to continue or ^C to abort..."
+      git checkout -b ${taskBranch}
+  fi
+fi 
 
 ## LOAD GITHUB USER INFO
 github_user_name=$( getGitConfigParam user.name )
