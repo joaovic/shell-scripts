@@ -1,7 +1,6 @@
-
 ## Description
 
-
+<!--- Please describe here any relevant information about this pull request -->
 
 ### Type of change
 
@@ -27,5 +26,4 @@
 - Please describe the unit tests you created and how did you tested this changes.
 
 ### QA
-
 - [ ] The changes pass in the exploratory manual tests
