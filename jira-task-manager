@@ -766,10 +766,10 @@ if [ "${MODE}" = "close" ]; then
   pause "Press RETURN to continue or ^C to abort..."
 
   if [ "${NODRAFT}" = "YES" ]; then
-    # gh pr create --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
+    ## gh pr create --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
     gh pr create --title "${pr_issue_title}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
   else
-    # gh pr create --draft --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
+    ## gh pr create --draft --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
     gh pr create --draft --title "${pr_issue_title}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
   fi
   
