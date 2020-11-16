@@ -53,7 +53,7 @@ function showHelp {
   printf "\n\t${YEL}-m  ${BLU}ou${YEL} --mode${RES}           Iniciar ou concluir o desenvolvimento de uma task. Valores: [create|close]. (${BLD}obrigatório${RES})"
   printf "\n\t${YEL}-t  ${BLU}ou${YEL} --task${RES}           O código da task a ser utilizada. (${BLD}obrigatório${RES} para iniciar uma task, ${BLD}opcional${RES} ao concluir${RES})"
   printf "\n\t${YEL}-r  ${BLU}ou${YEL} --repo${RES}           O repositório do GitHub a ser utilizado. (${BLD}default${RES}: PicPay)"
-  printf "\n\t${ORA}-nb ${BLU}ou${ORA} --no-body${RES}        Criar a PR sem o parâmetro 'body'. Utiliza o arquivo de template ${ORA}pull-request-template.md${RES}. (${BLD}default${RES}: false)"
+  printf "\n\t${ORA}-nb ${BLU}ou${ORA} --no-body${RES}        Criar a PR sem usar o parâmetro 'body', forçando uso do template ${ORA}pull-request-template.md${RES}. (${BLD}default${RES}: false)"
   printf "\n\t${ORA}-nc ${BLU}ou${ORA} --no-confirm${RES}     Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
   printf "\n\t${ORA}-nd ${BLU}ou${ORA} --no-draft${RES}       Indica para criar a PR sem passar pelo modo 'draft'. (${BLD}default${RES}: draft pr mode)"
   printf "\n\t${ORA}-fu ${BLU}ou${ORA} --force-update${RES}   Força a recuperação dos dados da task mesmo existindo no cache. (${BLD}default${RES}: use cache)"
@@ -79,6 +79,9 @@ function showHelp {
   printf "\n\tBaixe e instale a última versão do cliente do Github:"
   printf "\n\t${ORA}https://cli.github.com/${RES}"
   printf "\n"
+  printf "\n\tCertifique-se que possui o utilitário de linha de comando ${BLD}pbcopy${RES}:"
+  printf "\n\t${ORA}https://www.macobserver.com/tips/quick-tip/use-clipboard-in-terminal-without-mouse/${RES}"
+  printf "\n"
   printf "\n\tAtualize seu cliente do Github para a última versão com o comando:"
   printf "\n\t${RED}> ${GRE}brew${RES} ${ORA}upgrade${RES} gh"
   printf "\n"
@@ -102,7 +105,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.9${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.10${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -173,7 +176,21 @@ function getPrIssueLinkDescription(){
 
   ## Append "See <TASK>" hyperlink
   taskLinkText=$( getTaskLinkDescription )
-  echo -e "${__prIssueLinkText}\n\n${taskLinkText}\n" > /tmp/msg
+  echo -e "${__prIssueLinkText}\n\n${taskLinkText}" > /tmp/msg
+
+  CLIPPED="NO"
+  ## Check if exists pbcopy command
+  if command -v pbcopy &> /dev/null
+  then
+    if [ "${NOBODY}" = "YES" ]; then
+      ## Copy last 5 lines to clipboard
+      tail -5 /tmp/msg | pbcopy
+      CLIPPED="YES"
+    else
+      ## Copy full PR Body text file to clipboard
+      cat /tmp/msg | pbcopy
+    fi
+  fi
 
   ## Get description text with properly separated lines
   __prIssueLinkDescription=$( cat /tmp/msg )
@@ -572,6 +589,7 @@ if [[ "$FORCEUPDATE" = "YES" || "${MODE}" = "create" ]]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem fetching projet information for project ${GRE}${PROJECT}${RED} and task ${GRE}${TASK}${RED}!${RES}\n"
+    printf "\n${RED}Pray a little, cross your fingers and run the command again!${RES}\n\n"
     exit -1
   fi
 
@@ -700,7 +718,7 @@ if [ "${MODE}" = "create" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}"
-    printf "\n${RED}Pray, cross your fingers and run the command again!${RES}\n\n"
+    printf "\n${RED}Pray a little, cross your fingers and run the command again using '${YEL}-fr${RES}' parameter!${RES}\n\n"
     exit -1
   fi
 
@@ -798,6 +816,14 @@ if [ "${MODE}" = "close" ]; then
 
   ## CREATE PULL REQUEST TXT FILE
   $( createPullRequestFile ${TASK} ${PRFILETEXT} ${generated_pr_id} ${generated_pr_url} )
+
+  if [ "${CLIPPED}" = "YES" ]; then
+    if [ "${NOBODY}" = "YES" ]; then
+      printf "\n${YEL}Tip${RES}: Complementary description for your PR was pasted into your clipboard! Use it to enrich your PR description. ${RES}\n"
+    else
+      printf "\n${YEL}Tip${RES}: Full PR description was pasted into your clipboard! Good to replace the PR's messed text generated! ${RES}\n"
+    fi
+  fi
 
   printf "\n${GRE}Done!${RES}\n\n"
 
