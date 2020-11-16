@@ -47,14 +47,15 @@ function showHelp {
   printf "\n"
   printf "\n${BLD}UTILIZAÇÃO${RES}\n"
   printf "\n${RED}> ${DBL}$(basename ${0}) ${BLU}-m${BLD}=${YEL}create${RES}${BLD}|${YEL}close${RES} ${BLU}-t${BLD}=${RES}${BLD}<${YEL}task-code${RES}${BLD}>${RES}"
-  printf " ${BLU}-r${BLD}=${RES}${BLD}<${YEL}reposiory_name${RES}${BLD}> ${RES}${BLU}-nd${RES} ${BLU}-nc${RES} ${BLU}-fu${RES} ${BLU}-fr${RES} ${BLU}-wp${RES} ${BLU}-h${RES}\n"
+  printf " ${BLU}-r${BLD}=${RES}${BLD}<${YEL}reposiory_name${RES}${BLD}>${RES} ${BLU}-nb${RES} ${BLU}-nc${RES} ${BLU}-nd${RES} ${BLU}-fu${RES} ${BLU}-fr${RES} ${BLU}-wp${RES} ${BLU}-h${RES}\n"
   printf "\n"
   printf "\n${BLD}ARGUMENTOS:${RES}\n"
   printf "\n\t${YEL}-m  ${BLU}ou${YEL} --mode${RES}           Iniciar ou concluir o desenvolvimento de uma task. Valores: [create|close]. (${BLD}obrigatório${RES})"
   printf "\n\t${YEL}-t  ${BLU}ou${YEL} --task${RES}           O código da task a ser utilizada. (${BLD}obrigatório${RES} para iniciar uma task, ${BLD}opcional${RES} ao concluir${RES})"
   printf "\n\t${YEL}-r  ${BLU}ou${YEL} --repo${RES}           O repositório do GitHub a ser utilizado. (${BLD}default${RES}: PicPay)"
-  printf "\n\t${ORA}-nd ${BLU}ou${ORA} --no-draft${RES}       Indica para criar a PR sem passar pelo modo 'draft'. (${BLD}default${RES}: draft pr mode)"
+  printf "\n\t${ORA}-nb ${BLU}ou${ORA} --no-body${RES}        Criar a PR sem o parâmetro 'body'. Utiliza o arquivo de template ${ORA}pull-request-template.md${RES}. (${BLD}default${RES}: false)"
   printf "\n\t${ORA}-nc ${BLU}ou${ORA} --no-confirm${RES}     Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
+  printf "\n\t${ORA}-nd ${BLU}ou${ORA} --no-draft${RES}       Indica para criar a PR sem passar pelo modo 'draft'. (${BLD}default${RES}: draft pr mode)"
   printf "\n\t${ORA}-fu ${BLU}ou${ORA} --force-update${RES}   Força a recuperação dos dados da task mesmo existindo no cache. (${BLD}default${RES}: use cache)"
   printf "\n\t${ORA}-fr ${BLU}ou${ORA} --force-reassign${RES} Força a reassociação de uma task já vinculada a um outro usuário. (${BLD}default${RES}: no reassign)"
   printf "\n\t${ORA}-wp ${BLU}ou${ORA} --with-pause${RES}     Uma pausa antes execução de cada comando. (${BLD}default${RES}: no pause)"
@@ -101,7 +102,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.8${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.9${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -379,6 +380,8 @@ function loadJiraUserInfo() {
 
 # Default para que seja a PR seja criada em modo draft
 NODRAFT="NO"
+# Default para que seja informado o parametro --body ao criar a PR
+NOBODY="NO"
 # Default para que seja pedido a confirmação de execução para o usuário
 NOCONFIRM="NO"
 # Default para que seja atualizada a branch master local pela master remota (git pull)
@@ -408,6 +411,10 @@ do
     ;;
     -r=*|repo=*)
     REPO="${i#*=}"
+    shift
+    ;;
+    -nb|--no-body)
+    NOBODY="YES"
     shift
     ;;
     -nc|--no-confirm)
@@ -751,6 +758,7 @@ if [ "${MODE}" = "close" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}\n"
+    printf "\n${RED}Pray, cross your fingers and run the command again!${RES}\n\n"
     exit -1
   fi
 
@@ -761,20 +769,27 @@ if [ "${MODE}" = "close" ]; then
   generated_issue_id=$( readFileInfo ${ISSUEFILETEXT} "ISSUE_ID" )
   prIssueLinkDescription=$( getPrIssueLinkDescription ${generated_issue_id} )
   
+  ## Check config params to use on new Pull Request (Draft Mode ?)
+  DRAFT_OPT=""
+  if [ "${NODRAFT}" = "NO" ]; then
+    DRAFT_OPT="--draft"
+  fi
+
+  ## Check config params to use on new Pull Request (Use Template ?)
+  BODY_OPT=""
+  if [ "${NOBODY}" = "NO" ]; then
+    BODY_OPT="--body ${prIssueLinkDescription}"
+  fi
+
   ## CREATE PULL REQUEST TO THE USER
   printf "\n${YEL}Creating pull request on ${GRE}${REPO}${YEL} at repository ${GRE}${github_project_repo}${YEL} by user ${GRE}${github_user_login}${RES}\n"
   pause "Press RETURN to continue or ^C to abort..."
-
-  if [ "${NODRAFT}" = "YES" ]; then
-    ## gh pr create --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
-    gh pr create --title "${pr_issue_title}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
-  else
-    ## gh pr create --draft --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
-    gh pr create --draft --title "${pr_issue_title}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
-  fi
+  gh pr create ${DRAFT_OPT} --title "${pr_issue_title}" ${BODY_OPT} --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
   
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem creating pull request for task ${RES}${BLD}${TASK}${RED}!${RES}\n"
+    printf "\n${RED}Call down! You can manually revert back the status of your Jira task to \"Em Andamento\"${RES}\n"
+    printf "\n${RED}then pray, cross your fingers and run the command again!${RES}\n\n"
     exit -1
   fi
 
