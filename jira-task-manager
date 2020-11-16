@@ -105,7 +105,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.11${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.12${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -689,6 +689,7 @@ if [ ! "${assignee_id}" = "${user_key}" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem assigning issue ${BLD}${TASK}${RED} to ${BLD}${user_id}${RED}!${RES}\n"
+    printf "\n${RED}Pray a little, cross your fingers and run the command again!${RES}\n\n"
     exit -1
   fi
 
@@ -789,20 +790,20 @@ if [ "${MODE}" = "close" ]; then
     DRAFT_OPT="--draft"
   fi
 
-  ## Check config params to use on new Pull Request (Use Template ?)
-  BODY_OPT=""
-  if [ "${NOBODY}" = "NO" ]; then
-    BODY_OPT="--body ${prIssueLinkDescription}"
-  fi
-
   ## CREATE PULL REQUEST TO THE USER
   printf "\n${YEL}Creating pull request on ${GRE}${REPO}${YEL} at repository ${GRE}${github_project_repo}${YEL} by user ${GRE}${github_user_login}${RES}\n"
   pause "Press RETURN to continue or ^C to abort..."
-  gh pr create ${DRAFT_OPT} --title "${pr_issue_title}" ${BODY_OPT} --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
+
+  ## Check config params to use on new Pull Request (Use Template ?)
+  if [ "${NOBODY}" = "NO" ]; then
+    gh pr create ${DRAFT_OPT} --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
+  else
+    gh pr create ${DRAFT_OPT} --title "${pr_issue_title}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
+  fi
   
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem creating pull request for task ${RES}${BLD}${TASK}${RED}!${RES}\n"
-    printf "\n${RED}Call down! You can manually revert back the status of your Jira task to \"Em Andamento\"${RES}\n"
+    printf "\n${RED}Call down! You can manually change back the status of your Jira task to \"Em Andamento\"${RES}"
     printf "\n${RED}then pray, cross your fingers and run the command again!${RES}\n\n"
     exit -1
   fi
@@ -815,10 +816,11 @@ if [ "${MODE}" = "close" ]; then
 
   ## Check if exists pbcopy command. If exists, we have pasted info into clipboard by getPrIssueLinkDescription function
   if command -v pbcopy &> /dev/null
+  then
     if [ "${NOBODY}" = "YES" ]; then
-      printf "\n${YEL}Tip${RES}: Complementary description for your PR was pasted into your clipboard! Use it to enrich your PR description. ${RES}\n"
+      printf "\n${YEL}Tip${RES}: ${ORA}Complementary description for your PR was pasted into your clipboard! Use it to enrich your PR description. ${RES}\n"
     else
-      printf "\n${YEL}Tip${RES}: Full PR description was pasted into your clipboard! Good to replace the PR's messed text generated! ${RES}\n"
+      printf "\n${YEL}Tip${RES}: ${ORA}Full PR description was pasted into your clipboard! Good to replace the PR's messed text generated! ${RES}\n"
     fi
   fi
 
