@@ -105,7 +105,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.10${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.11${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -163,10 +163,7 @@ function getPrIssueLinkDescription(){
     __template=$( cat ${GITHUB_TEMPLATE_FILE} )
 
     ## Write the new string to a tmp file
-    echo -e "${__template}\n\nclose #${__issueId}\n" > /tmp/msg
-
-    __template=$( cat /tmp/msg )
-    echo -e "${__template}\n\nClose Issue #${__issueId}\n" > /tmp/msg
+    echo -e "${__template}\n\n####REFS\n\nclose #${__issueId}" > /tmp/msg
 
     ## Get template content with 'closes' tag appended to the end
     __prIssueLinkText=$( cat /tmp/msg )
@@ -175,17 +172,15 @@ function getPrIssueLinkDescription(){
   fi
 
   ## Append "See <TASK>" hyperlink
-  taskLinkText=$( getTaskLinkDescription )
-  echo -e "${__prIssueLinkText}\n\n${taskLinkText}" > /tmp/msg
+  __taskLinkText=$( getTaskLinkDescription )
+  echo -e "${__prIssueLinkText}\n${__taskLinkText}" > /tmp/msg
 
-  CLIPPED="NO"
   ## Check if exists pbcopy command
   if command -v pbcopy &> /dev/null
   then
     if [ "${NOBODY}" = "YES" ]; then
-      ## Copy last 5 lines to clipboard
-      tail -5 /tmp/msg | pbcopy
-      CLIPPED="YES"
+      ## Copy last 4 lines to clipboard
+      tail -4 /tmp/msg | pbcopy
     else
       ## Copy full PR Body text file to clipboard
       cat /tmp/msg | pbcopy
@@ -405,6 +400,7 @@ NOCONFIRM="NO"
 FORCEUPDATE="NO"
 FORCEREASSIGN="NO"
 WITHPAUSE="NO"
+# Default GIT Account Repo
 REPO="PicPay"
 
 __scriptName="$(basename ${0})"
@@ -817,7 +813,8 @@ if [ "${MODE}" = "close" ]; then
   ## CREATE PULL REQUEST TXT FILE
   $( createPullRequestFile ${TASK} ${PRFILETEXT} ${generated_pr_id} ${generated_pr_url} )
 
-  if [ "${CLIPPED}" = "YES" ]; then
+  ## Check if exists pbcopy command. If exists, we have pasted info into clipboard by getPrIssueLinkDescription function
+  if command -v pbcopy &> /dev/null
     if [ "${NOBODY}" = "YES" ]; then
       printf "\n${YEL}Tip${RES}: Complementary description for your PR was pasted into your clipboard! Use it to enrich your PR description. ${RES}\n"
     else
