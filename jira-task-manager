@@ -47,11 +47,12 @@ function showHelp {
   printf "\n"
   printf "\n${BLD}UTILIZAÇÃO${RES}\n"
   printf "\n${RED}> ${DBL}$(basename ${0}) ${BLU}-m${BLD}=${YEL}create${RES}${BLD}|${YEL}close${RES} ${BLU}-t${BLD}=${RES}${BLD}<${YEL}task-code${RES}${BLD}>${RES}"
-  printf " ${BLU}-nd${RES} ${BLU}-nc${RES} ${BLU}-fu${RES} ${BLU}-fr${RES} ${BLU}-wp${RES} ${BLU}-h${RES}\n"
+  printf " ${BLU}-r${BLD}=${RES}${BLD}<${YEL}reposiory_name${RES}${BLD}> ${RES}${BLU}-nd${RES} ${BLU}-nc${RES} ${BLU}-fu${RES} ${BLU}-fr${RES} ${BLU}-wp${RES} ${BLU}-h${RES}\n"
   printf "\n"
   printf "\n${BLD}ARGUMENTOS:${RES}\n"
   printf "\n\t${YEL}-m  ${BLU}ou${YEL} --mode${RES}           Iniciar ou concluir o desenvolvimento de uma task. Valores: [create|close]. (${BLD}obrigatório${RES})"
   printf "\n\t${YEL}-t  ${BLU}ou${YEL} --task${RES}           O código da task a ser utilizada. (${BLD}obrigatório${RES} para iniciar uma task, ${BLD}opcional${RES} ao concluir${RES})"
+  printf "\n\t${YEL}-r  ${BLU}ou${YEL} --repo${RES}           O repositório do GitHub a ser utilizado. (${BLD}default${RES}: PicPay)"
   printf "\n\t${ORA}-nd ${BLU}ou${ORA} --no-draft${RES}       Indica para criar a PR sem passar pelo modo 'draft'. (${BLD}default${RES}: draft pr mode)"
   printf "\n\t${ORA}-nc ${BLU}ou${ORA} --no-confirm${RES}     Permite não pedir confirmação do usuário para iniciar o processo. (${BLD}default${RES}: confirm)"
   printf "\n\t${ORA}-fu ${BLU}ou${ORA} --force-update${RES}   Força a recuperação dos dados da task mesmo existindo no cache. (${BLD}default${RES}: use cache)"
@@ -62,12 +63,12 @@ function showHelp {
   printf "\n"
   printf "\n${BLD}PRÉ-REQUISITOS:${RES}\n"
   printf "\n\tConfigure uma chave de API para sua conta do Jira:"
-  printf "\n\thttps://id.atlassian.com/manage-profile/security/api-tokens"
+  printf "\n\t${ORA}https://id.atlassian.com/manage-profile/security/api-tokens${RES}"
   printf "\n\t${ORA}OBS${RES}: anote a string do token gerado para colocar na configuração do cli do Jira"
   printf "\n\t"
   printf "\n\t"
   printf "\n\tBaixe e instale a última versão do cliente do Jira: (atualmente ACLI-9.4.0-installer.dmg)"
-  printf "\n\thttps://bobswift.atlassian.net/wiki/spaces/info/pages/16285777/Downloads"
+  printf "\n\t${ORA}https://bobswift.atlassian.net/wiki/spaces/info/pages/16285777/Downloads${RES}"
   printf "\n\t${ORA}OBS${RES}: Na configuração do cli do Jira informe:\n"
   printf "\n\t     - Atlassiann Cloud URL: ${BLD}https://picpay.atlassian.net${RES}"
   printf "\n\t     - User Email: ${BLD}Seu email PicPay utlizado no Jira${RES}"
@@ -75,17 +76,21 @@ function showHelp {
   printf "\n\t     - Connection name (no spaces): ${BLD}PicPay${RES}\n"
   printf "\n\t"
   printf "\n\tBaixe e instale a última versão do cliente do Github:"
-  printf "\n\thttps://cli.github.com/"
-  printf "\n\t${ORA}OBS${RES}: Depois de instalado o client do github confira se foi criado o arquivo '~/.config/gh/hosts.yml’"
+  printf "\n\t${ORA}https://cli.github.com/${RES}"
+  printf "\n"
+  printf "\n\tAtualize seu cliente do Github para a última versão com o comando:"
+  printf "\n\t${RED}> ${GRE}brew${RES} ${ORA}upgrade${RES} gh"
+  printf "\n"
+  printf "\n${BLD}DICAS:${RES}\n"
+  printf "\n\t${ORA}OBS${RES}: Depois de instalado o client do github confira se foi criado o arquivo '${ORA}~/.config/gh/hosts.yml${RES}'"
   printf "\n\tO arquivo deve ter no mínimo o seguinte conteúdo:\n"
   printf "\n\t${BLD}github.com:${RES}"    
   printf "\n\t${BLD}   user:${RES} ${ORA}seu-user-no-github${RES}"
   printf "\n"
   printf "\n\tMais informação sobre como configurar o seu cliente do github:"
-  printf "\n\thttps://docs.github.com/pt/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token"
+  printf "\n\t${ORA}https://docs.github.com/pt/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token${RES}"
   printf "\n"
-  printf "\n${BLD}DICAS:${RES}\n"
-  printf "\n\t${ORA}Coloque no path a pasta contendo o script${RES}:"
+  printf "\n\t${RES}Coloque no path a pasta contendo o script${RES}:"
   printf "\n\t${RED}> ${DBL}export ${BLD}PATH${RES}=\"${BLU}\$HOME${ORA}/tools/shell-scripts/${RES}:${BLU}\$PATH${RES}\"\n"
   printf "\n"
   printf "\n\t${ORA}Crie um ${UND}alias${RES}${ORA} para cada ${YEL}modo${RES}${ORA} de execução do script${RES}:"
@@ -96,7 +101,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.6${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.8${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -140,7 +145,7 @@ function getPrIssueTitleFromSummary(){
 }
 
 function getTaskLinkDescription(){
-  __taskLinkDescription="See [${TASK}](https://picpay.atlassian.net/browse/${TASK})"
+  __taskLinkDescription="See Jira Task [${TASK}](https://picpay.atlassian.net/browse/${TASK})"
 	echo $__taskLinkDescription
 }
 
@@ -151,27 +156,23 @@ function getPrIssueLinkDescription(){
 
   ## If we have pull request template file
   if [ -n ${GITHUB_TEMPLATE_FILE} ]; then
-    __template=""
-    __input=${GITHUB_TEMPLATE_FILE}
-
-    ## Loop throught all file lines appending the new line caracter
-    while IFS= read -r __line
-    do
-      __template="${__template}${__line}\n"
-    done < $__input
+    __template=$( cat ${GITHUB_TEMPLATE_FILE} )
 
     ## Write the new string to a tmp file
-    echo -e "${__template}\n\ncloses #${__issueId}" > /tmp/msg
+    echo -e "${__template}\n\nclose #${__issueId}\n" > /tmp/msg
 
-    ## Get tmp file content with properly separated lines
+    __template=$( cat /tmp/msg )
+    echo -e "${__template}\n\nClose Issue #${__issueId}\n" > /tmp/msg
+
+    ## Get template content with 'closes' tag appended to the end
     __prIssueLinkText=$( cat /tmp/msg )
   else
-    __prIssueLinkText="closes #${__issueId}"
+    __prIssueLinkText="close #${__issueId}"
   fi
 
   ## Append "See <TASK>" hyperlink
   taskLinkText=$( getTaskLinkDescription )
-  echo -e "${__prIssueLinkText}\n\n${taskLinkText}" > /tmp/msg
+  echo -e "${__prIssueLinkText}\n\n${taskLinkText}\n" > /tmp/msg
 
   ## Get description text with properly separated lines
   __prIssueLinkDescription=$( cat /tmp/msg )
@@ -384,6 +385,7 @@ NOCONFIRM="NO"
 FORCEUPDATE="NO"
 FORCEREASSIGN="NO"
 WITHPAUSE="NO"
+REPO="PicPay"
 
 __scriptName="$(basename ${0})"
 
@@ -402,6 +404,10 @@ do
     ;;
     -t=*|task=*)
     TASK="${i#*=}"
+    shift
+    ;;
+    -r=*|repo=*)
+    REPO="${i#*=}"
     shift
     ;;
     -nc|--no-confirm)
@@ -686,7 +692,8 @@ if [ "${MODE}" = "create" ]; then
   acli PicPay -a transitionIssue --issue ${TASK} --transition "21"
 
   if [ "$?" -ne 0 ]; then
-    printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}\n"
+    printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}"
+    printf "\n${RED}Pray, cross your fingers and run the command again!${RES}\n\n"
     exit -1
   fi
 
@@ -695,9 +702,9 @@ if [ "${MODE}" = "create" ]; then
   task_link_description=$( getTaskLinkDescription )
 
   ## CREATE ISSUE TO THE USER
-  printf "\n${YEL}Create issue on ${GRE}PicPay${YEL} at repository ${GRE}${github_project_repo}${YEL} by user ${GRE}${github_user_login}${RES}\n"
+  printf "\n${YEL}Create issue on ${GRE}${REPO}${YEL} at repository ${GRE}${github_project_repo}${YEL} by user ${GRE}${github_user_login}${RES}\n"
   pause "Press RETURN to continue or ^C to abort..."
-  gh issue create --title "${pr_issue_title}" --body "${task_link_description}" --assignee ${github_user_login} --repo PicPay/${github_project_repo}
+  gh issue create --title "${pr_issue_title}" --body "${task_link_description}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem creating issue for task ${RES}${BLD}${TASK}${RED}!${RES}\n"
@@ -755,13 +762,13 @@ if [ "${MODE}" = "close" ]; then
   prIssueLinkDescription=$( getPrIssueLinkDescription ${generated_issue_id} )
   
   ## CREATE PULL REQUEST TO THE USER
-  printf "\n${YEL}Creating pull request on ${GRE}PicPay${YEL} at repository ${GRE}${github_project_repo}${YEL} by user ${GRE}${github_user_login}${RES}\n"
+  printf "\n${YEL}Creating pull request on ${GRE}${REPO}${YEL} at repository ${GRE}${github_project_repo}${YEL} by user ${GRE}${github_user_login}${RES}\n"
   pause "Press RETURN to continue or ^C to abort..."
 
   if [ "${NODRAFT}" = "YES" ]; then
-    gh pr create --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo PicPay/${github_project_repo}
+    gh pr create --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
   else
-    gh pr create --draft --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo PicPay/${github_project_repo}
+    gh pr create --draft --title "${pr_issue_title}" --body "${prIssueLinkDescription}" --assignee ${github_user_login} --repo ${REPO}/${github_project_repo}
   fi
   
   if [ "$?" -ne 0 ]; then
@@ -770,7 +777,7 @@ if [ "${MODE}" = "close" ]; then
   fi
 
   generated_pr_id=$( gh pr list | grep ${TASK} | awk '{print $1}' )
-  generated_pr_url="https://github.com/PicPay/${github_project_repo}/pull/${generated_pr_id}"
+  generated_pr_url="https://github.com/${REPO}/${github_project_repo}/pull/${generated_pr_id}"
 
   ## CREATE PULL REQUEST TXT FILE
   $( createPullRequestFile ${TASK} ${PRFILETEXT} ${generated_pr_id} ${generated_pr_url} )
