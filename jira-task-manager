@@ -105,7 +105,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.12${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.13${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -163,7 +163,7 @@ function getPrIssueLinkDescription(){
     __template=$( cat ${GITHUB_TEMPLATE_FILE} )
 
     ## Write the new string to a tmp file
-    echo -e "${__template}\n\n####REFS\n\nclose #${__issueId}" > /tmp/msg
+    echo -e "${__template}\n\n#### REFS\n\nclose #${__issueId}" > /tmp/msg
 
     ## Get template content with 'closes' tag appended to the end
     __prIssueLinkText=$( cat /tmp/msg )
