@@ -105,7 +105,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.13${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.14${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -585,7 +585,7 @@ if [[ "$FORCEUPDATE" = "YES" || "${MODE}" = "create" ]]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem fetching projet information for project ${GRE}${PROJECT}${RED} and task ${GRE}${TASK}${RED}!${RES}\n"
-    printf "\n${RED}Pray a little, cross your fingers and run the command again!${RES}\n\n"
+    printf "\n${ORA}Pray a little, cross your fingers and try again!${RES}\n\n"
     exit -1
   fi
 
@@ -689,7 +689,7 @@ if [ ! "${assignee_id}" = "${user_key}" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem assigning issue ${BLD}${TASK}${RED} to ${BLD}${user_id}${RED}!${RES}\n"
-    printf "\n${RED}Pray a little, cross your fingers and run the command again!${RES}\n\n"
+    printf "\n${ORA}Pray a little, cross your fingers and try again!${RES}\n\n"
     exit -1
   fi
 
@@ -715,7 +715,7 @@ if [ "${MODE}" = "create" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}"
-    printf "\n${RED}Pray a little, cross your fingers and run the command again using '${YEL}-fr${RES}' parameter!${RES}\n\n"
+    printf "\n${ORA}Pray a little, cross your fingers and try again using ${RES}'${YEL}-fr${RES}'${ORA} parameter!${RES}\n\n"
     exit -1
   fi
 
@@ -773,7 +773,7 @@ if [ "${MODE}" = "close" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem transitioning task ${RES}${TASK}${RED} status!${RES}\n"
-    printf "\n${RED}Pray, cross your fingers and run the command again!${RES}\n\n"
+    printf "\n${ORA}Pray a little, cross your fingers and try again!${RES}\n\n"
     exit -1
   fi
 
