@@ -25,7 +25,7 @@ function showHelp {
   printf " > git config --global user.jira-name \"<SEU NOME NO JIRA>\"\n"
   printf " > git config --global user.jira-email \"<SEU EMAIL NO JIRA>\"\n"
   printf "\n"
-  printf "\n${YEL}Cenário de Utilização${RES}\n"
+  printf "\n${YEL}Cenários de Utilização${RES}\n"
   printf "\n"
   printf "${ORA}1)${RES} O desenvolvedor deseja inciar o desenvolvimento da tarefa PCR-999 do Jira:\n"
   printf "\n"
