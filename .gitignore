@@ -1,2 +1,6 @@
 .vscode/
 logs/
+
+### LINT COMMIT E COMMITZEN ####
+*-lock.json
+node_modules/
