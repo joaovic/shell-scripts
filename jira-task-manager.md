@@ -87,7 +87,7 @@ OBS: Caso não seja informado a task a ser fechada, o script utiliza o nome da b
 	> brew install gh
 	```
 
-	Depois de ter instalado configure na sua conta do GitHub com o comando:
+	Depois de ter instalado configure sua conta do GitHub com o comando:
 	```bash
 	> gh auth login
 	```

@@ -79,10 +79,13 @@ function showHelp {
   printf "\n\tBaixe e instale a última versão do cliente do Github:"
   printf "\n\t${ORA}https://cli.github.com/${RES}"
   printf "\n"
-  printf "\n\tCertifique-se que possui o utilitário de linha de comando ${BLD}pbcopy${RES}:"
-  printf "\n\t${ORA}https://www.macobserver.com/tips/quick-tip/use-clipboard-in-terminal-without-mouse/${RES}"
+  printf "\n\tOu instale com o uso do ${ORA}Home Brew${RES}:"
+  printf "\n\t${RED}> ${GRE}brew${RES} ${ORA}install${RES} gh"
   printf "\n"
-  printf "\n\tAtualize seu cliente do Github para a última versão com o comando:"
+  printf "\n\tDepois de ter instalado configure sua conta do GitHub com o comando:"
+  printf "\n\t${RED}> ${GRE}gh${RES} ${ORA}auth${RES} login"
+  printf "\n"
+  printf "\n\tOu, se já tiver instalado, atualize-o para a última versão com o comando:"
   printf "\n\t${RED}> ${GRE}brew${RES} ${ORA}upgrade${RES} gh"
   printf "\n"
   printf "\n${BLD}DICAS:${RES}\n"
@@ -105,7 +108,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.14${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.15${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -576,6 +579,11 @@ if [ -z "${jira_user_name}" ]; then
   user_name=${github_user_name}
 else
   user_name=${jira_user_name}
+fi
+
+## Force update on the first run
+if [[ "$FORCEUPDATE" = "NO" && ! -s ${USERFILECACHE} ]]; then
+  FORCEUPDATE = "YES"
 fi
 
 ## GENERATE CACHE FILE IF NEEDED
