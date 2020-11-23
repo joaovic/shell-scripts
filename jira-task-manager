@@ -512,10 +512,10 @@ if [ ! "$PARAMERROR" = "" ]; then
 fi
 
 PROJECT=${TASK%-*}
-TASKFILECACHE=~/.${__scriptName}/${PROJECT}/${TASK}.cache
-TASKFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}.txt
-ISSUEFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}-issue.txt
-PRFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}-pull-request.txt
+TASKFILECACHE=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}.cache
+TASKFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}.txt
+ISSUEFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}-issue.txt
+PRFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}-pull-request.txt
 USERFILECACHE=~/.${__scriptName}/user.cache
 USERFILETEXT=~/.${__scriptName}/user.txt
 GITHUB_CLI_CONFIG=~/.config/gh/hosts.yml
