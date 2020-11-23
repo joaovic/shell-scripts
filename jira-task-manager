@@ -108,7 +108,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.15${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.16${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -131,7 +131,7 @@ function getProjectData() {
   # Param 2 = TASK
   # Param 3 = CACHE FILE
 
-  mkdir -p  ~/.${__scriptName}/${1}
+  mkdir -p  ~/.${__scriptName}/${1}/${2}
 
 	$( acli PicPay -a getIssue --issue ${2} --project ${1} > ${3} ) 
 }
@@ -516,6 +516,7 @@ TASKFILECACHE=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}.cache
 TASKFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}.txt
 ISSUEFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}-issue.txt
 PRFILETEXT=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}-pull-request.txt
+PRDESCRFILE=~/.${__scriptName}/${PROJECT}/${TASK}/${TASK}-pull-request-description.txt
 USERFILECACHE=~/.${__scriptName}/user.cache
 USERFILETEXT=~/.${__scriptName}/user.txt
 GITHUB_CLI_CONFIG=~/.config/gh/hosts.yml
@@ -582,13 +583,14 @@ else
 fi
 
 ## Force update on the first run
-if [[ "$FORCEUPDATE" = "NO" && ! -s ${USERFILECACHE} ]]; then
-  FORCEUPDATE = "YES"
+if [[ "${FORCEUPDATE}" = "NO" && ! -s ${USERFILECACHE} ]]; then
+  FORCEUPDATE="YES"
 fi
 
 ## GENERATE CACHE FILE IF NEEDED
 if [[ "$FORCEUPDATE" = "YES" || "${MODE}" = "create" ]]; then
   printf "\n${YEL}Fetching task ${GRE}${TASK}${YEL} information on project ${GRE}${PROJECT}${YEL}.${RES}\n"
+  pause "Press RETURN to continue or ^C to abort..."
   $( getProjectData ${PROJECT} ${TASK} ${TASKFILECACHE} )
 
   if [ "$?" -ne 0 ]; then
@@ -599,6 +601,7 @@ if [[ "$FORCEUPDATE" = "YES" || "${MODE}" = "create" ]]; then
 
   if [ "$FORCEUPDATE" = "YES" ]; then
     printf "\n${YEL}Fetching user ${GRE}${user_name}${YEL} information${YEL}.${RES}\n"
+    pause "Press RETURN to continue or ^C to abort..."
     $( getUserInformation "${user_name}" ${USERFILECACHE} )
 
     if [ "$?" -ne 0 ]; then
@@ -609,10 +612,13 @@ if [[ "$FORCEUPDATE" = "YES" || "${MODE}" = "create" ]]; then
 
     ## READ FILE INFO DATA AND STORE ON GIT CONFIG FILE
     if [ -z "${jira_user_id}" ]; then
+      printf "\n${YEL}Reading user file info ${GRE}${USERFILECACHE}${YEL}.${RES}\n"
+      pause "Press RETURN to continue or ^C to abort..."
       jira_user_id=$( readFileInfo ${USERFILECACHE} "User id" )
 
       if [ -n "${jira_user_id}" ]; then
         printf "\n${YEL}Updating Jira User Id ${GRE}${jira_user_id}${YEL} to your git config file${YEL}.${RES}\n"
+        pause "Press RETURN to continue or ^C to abort..."
         $( git config --global user.jira-id "${jira_user_id}" | xargs -0 )
       fi
     fi
@@ -791,6 +797,9 @@ if [ "${MODE}" = "close" ]; then
   ## Get issue ID to relate this PR to
   generated_issue_id=$( readFileInfo ${ISSUEFILETEXT} "ISSUE_ID" )
   prIssueLinkDescription=$( getPrIssueLinkDescription ${generated_issue_id} )
+
+  ## Generate PR description File
+  echo -e "${prIssueLinkDescription}" > ${PRDESCRFILE}
   
   ## Check config params to use on new Pull Request (Draft Mode ?)
   DRAFT_OPT=""
