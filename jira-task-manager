@@ -108,7 +108,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.16${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.17${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -156,7 +156,7 @@ function getTaskLinkDescription(){
 	echo $__taskLinkDescription
 }
 
-function getPrIssueLinkDescription(){
+function createPrIssueLinkDescription(){
   __issueId=${1}
 
   GITHUB_TEMPLATE_FILE=.github/pull_request_template.md
@@ -193,7 +193,8 @@ function getPrIssueLinkDescription(){
   ## Get description text with properly separated lines
   __prIssueLinkDescription=$( cat /tmp/msg )
 
-	echo $__prIssueLinkDescription
+  ## Create PR description file
+  $( cp /tmp/msg ${PRDESCRFILE} )
 }
 
 ### FUNÇÃO QUE FAZ A LEITURA DE UM DADO DO UM ARQUIVO DE INFORMACOES DA TASK
@@ -796,10 +797,10 @@ if [ "${MODE}" = "close" ]; then
 
   ## Get issue ID to relate this PR to
   generated_issue_id=$( readFileInfo ${ISSUEFILETEXT} "ISSUE_ID" )
-  prIssueLinkDescription=$( getPrIssueLinkDescription ${generated_issue_id} )
+  createPrIssueLinkDescription ${generated_issue_id}
 
-  ## Generate PR description File
-  echo -e "${prIssueLinkDescription}" > ${PRDESCRFILE}
+  ## Read PR description File
+  prIssueLinkDescription=$( cat /tmp/msg )
   
   ## Check config params to use on new Pull Request (Draft Mode ?)
   DRAFT_OPT=""
