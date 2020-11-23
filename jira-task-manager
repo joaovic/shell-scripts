@@ -178,18 +178,6 @@ function createPrIssueLinkDescription(){
   __taskLinkText=$( getTaskLinkDescription )
   echo -e "${__prIssueLinkText}\n${__taskLinkText}" > /tmp/msg
 
-  ## Check if exists pbcopy command
-  if command -v pbcopy &> /dev/null
-  then
-    if [ "${NOBODY}" = "YES" ]; then
-      ## Copy last 4 lines to clipboard
-      tail -4 /tmp/msg | pbcopy
-    else
-      ## Copy full PR Body text file to clipboard
-      cat /tmp/msg | pbcopy
-    fi
-  fi
-
   ## Get description text with properly separated lines
   __prIssueLinkDescription=$( cat /tmp/msg )
 
@@ -216,6 +204,25 @@ function readFileInfo(){
     __data=$( echo "${__data}" | sed -e 's/^[[:space:]]*//' )
 
     echo $__data
+  fi
+}
+
+function copyJiraTaskDescriptionToClipboard() {
+  __jiraTaskDesc=$( acli PicPay -a getFieldValue --issue "${TASK}" --field "Description" )
+  __jiraTaskDesc=$( echo -e "${__jiraTaskDesc#*:}" | sed -e 's/^[[:space:]]*//' )
+
+  echo -e "${__jiraTaskDesc}" > /tmp/taskdescr
+
+  ## Check if exists pbcopy command
+  if command -v pbcopy &> /dev/null
+  then
+    if [ "${NOBODY}" = "YES" ]; then
+      ## Copy last 4 lines to clipboard
+      tail -4 /tmp/taskdescr | pbcopy
+    else
+      ## Copy full PR Body text file to clipboard
+      cat /tmp/taskdescr | pbcopy
+    fi
   fi
 }
 
@@ -832,14 +839,21 @@ if [ "${MODE}" = "close" ]; then
   ## CREATE PULL REQUEST TXT FILE
   $( createPullRequestFile ${TASK} ${PRFILETEXT} ${generated_pr_id} ${generated_pr_url} )
 
+  ## CREATE COMPLEMENTARY PR DESCRIPTION BASED ON JIRA DESCRIPTION
+  printf "\n${YEL}Getting Jira Task Descripton for ${GRE}${TASK}${YEL}${RES}\n"
+  pause "Press RETURN to continue or ^C to abort..."
+  copyJiraTaskDescriptionToClipboard ${TASK}
+
+  if [ "$?" -ne 0 ]; then
+    printf "\n${RED}Problem getting task description for task ${RES}${BLD}${TASK}${RED}!${RES}\n"
+    printf "\n${RED}Call down! You'll survive. Copy your jira task description manually and use it to enrich your PR description!${RES}\n"
+    exit -1
+  fi
+
   ## Check if exists pbcopy command. If exists, we have pasted info into clipboard by getPrIssueLinkDescription function
   if command -v pbcopy &> /dev/null
   then
-    if [ "${NOBODY}" = "YES" ]; then
-      printf "\n${YEL}Tip${RES}: ${ORA}Complementary description for your PR was pasted into your clipboard! Use it to enrich your PR description. ${RES}\n"
-    else
-      printf "\n${YEL}Tip${RES}: ${ORA}Full PR description was pasted into your clipboard! Good to replace the PR's messed text generated! ${RES}\n"
-    fi
+    printf "\n${YEL}Tip${RES}: ${ORA}Task description was copied into your clipboard! Use it to enrich your PR description.${RES}\n"
   fi
 
   printf "\n${GRE}Done!${RES}\n\n"
