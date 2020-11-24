@@ -108,7 +108,7 @@ function showHelp {
   printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
   printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.18${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.19${RES}"
   printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
   printf "\n"
 }
@@ -208,15 +208,18 @@ function readFileInfo(){
 }
 
 function copyJiraTaskDescriptionToClipboard() {
-  __jiraTaskDesc=$( acli PicPay -a getFieldValue --issue "${1}" --field "Description" )
+  __task=${1}
+  __tmpFile=${2}
+
+  __jiraTaskDesc=$( acli PicPay -a getFieldValue --issue "${__task}" --field "Description" )
   __jiraTaskDesc=$( echo -e "${__jiraTaskDesc#*:}" | sed -e 's/^[[:space:]]*//' )
 
-  echo -e "${__jiraTaskDesc}" > /tmp/taskdescr
+  echo -e "${__jiraTaskDesc}" > ${__tmpFile}
 
   ## Check if exists pbcopy command
-  if command -v pbcopy &> /dev/null
-  then
-    cat /tmp/taskdescr | pbcopy
+  if command -v pbcopy &> /dev/null; then
+    ## Copy tmpFile content to clipboard
+    cat ${__tmpFile}| pbcopy
   fi
 }
 
@@ -836,7 +839,7 @@ if [ "${MODE}" = "close" ]; then
   ## CREATE COMPLEMENTARY PR DESCRIPTION BASED ON JIRA DESCRIPTION
   printf "\n${YEL}Getting Jira Task Descripton from ${GRE}${TASK}${YEL}${RES}\n"
   pause "Press RETURN to continue or ^C to abort..."
-  copyJiraTaskDescriptionToClipboard ${TASK}
+  copyJiraTaskDescriptionToClipboard ${TASK} /tmp/taskdescr
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem getting task description from task ${RES}${BLD}${TASK}${RED}!${RES}\n"
@@ -845,9 +848,11 @@ if [ "${MODE}" = "close" ]; then
   fi
 
   ## Check if exists pbcopy command. If exists, we have pasted info into clipboard by getPrIssueLinkDescription function
-  if command -v pbcopy &> /dev/null
-  then
-    printf "\n${YEL}Tip${RES}: ${ORA}Task description was copied into your clipboard! Use it to enrich your PR description.${RES}\n"
+  if command -v pbcopy &> /dev/null; then
+    taskDescr=$( cat /tmp/taskdescr )
+    if [ -n "${taskDescr}" ]; then
+      printf "\n${YEL}Tip${RES}: ${ORA}Task description was copied into your clipboard! Use it to enrich your PR description.${RES}\n"
+    fi
   fi
 
   printf "\n${GRE}Done!${RES}\n\n"
