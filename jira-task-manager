@@ -1,49 +1,50 @@
 #!/bin/bash
 
 # Definição de cores para output no console
-BLD='\e[1m'    # BOLD
-DIM='\e[2m'    # DIM
-UND='\e[4m'    # UNDERLINE
-RED='\e[1;31m' # RED
-GRE='\e[1;32m' # GREEN
-DGR='\e[2;32m' # DARK GREEN
-YEL='\e[1;33m' # YELLOW
-ORA='\e[0;33m' # ORANGE
-BLU='\e[1;36m' # BLUE
-DBL='\e[0;36m' # DARK BLUE
-RES='\e[0m'    # RESET ALL
+BLD='\e[1m'     # BOLD
+DIM='\e[2m'     # DIM
+UND='\e[4m'     # UNDERLINE
+RED='\e[1;31m'  # RED
+GRE='\e[1;32m'  # GREEN
+DGR='\e[2;32m'  # DARK GREEN
+YEL='\e[1;33m'  # YELLOW
+ORA='\e[0;33m'  # ORANGE
+BLU='\e[1;36m'  # BLUE
+DBL='\e[0;36m'  # DARK BLUE
+RES='\e[0m'     # RESET ALL
+LNK='\e]8;;'    # LINK
 
 ### FUNÇÃO QUE EXIBE O HELP
 function showHelp {
   clear
   printf "\n${YEL}JIRA TASK MANAGER${RES}\n"
   printf "\n"
-  printf "\n${BLU}Realiza uma abstração da task do Jira criando uma issue e um pull request de forma automática${RES}\n"
-  printf "O script identifica seu usuário Jira com base no valor da propriedade 'user.name' do seu '~/.gitconfig'\n"
-  printf "Caso não encontre, pode ser definido manualmente com os comandos abaixo: \n\n"
-  printf " > git config --global user.jira-id \"<SEU ID NO JIRA>\"\n"
-  printf " > git config --global user.jira-name \"<SEU NOME NO JIRA>\"\n"
-  printf " > git config --global user.jira-email \"<SEU EMAIL NO JIRA>\"\n"
+  printf "\nRealiza controle da task do Jira criando uma issue e um pull request de forma automática.\n"
+  printf "O script identifica seu usuário do Jira baseado no seu usuário do GitHub.\n"
   printf "\n"
-  printf "\n${YEL}Cenários de Utilização${RES}\n"
+  printf "\n${BLD}CENÁRIOS${RES}\n"
   printf "\n"
-  printf "${ORA}1)${RES} O desenvolvedor deseja inciar o desenvolvimento da tarefa PCR-999 do Jira:\n"
+  printf "${YEL}1)${ORA} Desenvolvedor deseja inciar o desenvolvimento da tarefa PCR-999 do Jira:${RES}\n"
   printf "\n"
   printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}--mode${BLD}=${YEL}create${RES} ${BLU}--task${BLD}=${YEL}PCR-999${RES}\n"
   printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}-m${BLD}=${YEL}create${RES} ${BLU}-t${BLD}=${YEL}PCR-999${RES}\n"
-  printf "\n\tO script vai vincular a tarefa ao usuário e passar seu status para 'Em Andamento',"
-  printf "\n\tem seguida, vai criar uma issue no Github e fazer um vínculo com a tarefa de origem no Jira.\n"
+  printf "${RED}> ${DBL}gjt${RES} ${BLU}-t${BLD}=${YEL}PCR-999${RES}             (se já tiver criado o alias)\n"
+  printf "\n\tO script vai vincular a task do Jira ao seu usuário e passar seu status para 'Em Andamento',"
+  printf "\n\tem seguida, vai criar uma issue no Github e fazer um vínculo com a tarefa no Jira.\n"
   printf "\n"
-  printf "${ORA}2)${RES} O desenvolvedor deseja concluir o desenvolvimento da tarefa PCR-999 do Jira:\n"
+  printf "${YEL}2)${ORA} Desenvolvedor deseja concluir o desenvolvimento da tarefa PCR-999 do Jira:${RES}\n"
   printf "\n"
   printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}--mode${BLD}=${YEL}close${RES} ${BLU}--task${BLD}=${YEL}PCR-999${RES}\n"
   printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}-m${BLD}=${YEL}close${RES} ${BLU}-t${BLD}=${YEL}PCR-999${RES}\n"
-  printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}-m${BLD}=${YEL}close${RES} (se não informar a task, será usado o nome da branch)\n"
+  printf "${RED}> ${DBL}jira-task-manager${RES} ${BLU}-m${BLD}=${YEL}close${RES} (se não informar a task, será inferido pelo nome da branch)\n"
+  printf "${RED}> ${DBL}cjt${RES} ${BLU}-t${BLD}=${YEL}PCR-999${RES}             (se já tiver criado o alias)\n"
+  printf "${RED}> ${DBL}cjt${RES}                        (se não informar a task, será inferido pelo nome da branch)\n"
   printf "\n\tO script vai passar a tarefa para o status 'Em Review',"
   printf "\n\tem seguida, vai criar um pull request no Github e fazer um vínculo com a issue"
   printf "\n\tde modo que ao concluir o pull request, a issue vinculada seja automaticamente fechada."
   printf "\n"
-  printf "\nOBS: Caso não seja informado a task a ser fechada, o script utiliza o nome da branch corrente.\n"
+  printf "\n\t${ORA}OBS:${RES}"
+  printf "\n\tCaso não seja informado a task a ser fechada, o script utiliza o nome da branch corrente para inferir o nome da task."
   printf "\n"
   printf "\n${BLD}UTILIZAÇÃO${RES}\n"
   printf "\n${RED}> ${DBL}$(basename ${0}) ${BLU}-m${BLD}=${YEL}create${RES}${BLD}|${YEL}close${RES} ${BLU}-t${BLD}=${RES}${BLD}<${YEL}task-code${RES}${BLD}>${RES}"
@@ -62,54 +63,12 @@ function showHelp {
   printf "\n\t${ORA}-h  ${BLU}ou${ORA} --help${RES}           Exibe esta ajuda."
   printf "\n"
   printf "\n"
-  printf "\n${BLD}PRÉ-REQUISITOS:${RES}\n"
-  printf "\n\tConfigure uma chave de API para sua conta do Jira:"
-  printf "\n\t${ORA}https://id.atlassian.com/manage-profile/security/api-tokens${RES}"
-  printf "\n\t${ORA}OBS${RES}: anote a string do token gerado para colocar na configuração do cli do Jira"
-  printf "\n\t"
-  printf "\n\t"
-  printf "\n\tBaixe e instale a última versão do cliente do Jira: (atualmente ACLI-9.4.0-installer.dmg)"
-  printf "\n\t${ORA}https://bobswift.atlassian.net/wiki/spaces/info/pages/16285777/Downloads${RES}"
-  printf "\n\t${ORA}OBS${RES}: Na configuração do cli do Jira informe:\n"
-  printf "\n\t     - Atlassiann Cloud URL: ${BLD}https://picpay.atlassian.net${RES}"
-  printf "\n\t     - User Email: ${BLD}Seu email PicPay utlizado no Jira${RES}"
-  printf "\n\t     - API token: ${BLD}Token gerado no passo anterior${RES}"
-  printf "\n\t     - Connection name (no spaces): ${BLD}PicPay${RES}\n"
-  printf "\n\t"
-  printf "\n\tBaixe e instale a última versão do cliente do Github:"
-  printf "\n\t${ORA}https://cli.github.com/${RES}"
+  printf "\n${BLD}CONFIGURAÇÃO:${RES}\n"
+  printf "\n\tVeja em: ${LNK}https://github.com/joaovic/shell-scripts/blob/master/jira-task-manager.md\a${BLU}jira-task-manager.md${RES}${LNK}\a"
   printf "\n"
-  printf "\n\tOu instale com o uso do ${ORA}Home Brew${RES}:"
-  printf "\n\t${RED}> ${GRE}brew${RES} ${ORA}install${RES} gh"
-  printf "\n"
-  printf "\n\tDepois de ter instalado configure sua conta do GitHub com o comando:"
-  printf "\n\t${RED}> ${GRE}gh${RES} ${ORA}auth${RES} login"
-  printf "\n"
-  printf "\n\tOu, se já tiver instalado, atualize-o para a última versão com o comando:"
-  printf "\n\t${RED}> ${GRE}brew${RES} ${ORA}upgrade${RES} gh"
-  printf "\n"
-  printf "\n${BLD}DICAS:${RES}\n"
-  printf "\n\t${ORA}OBS${RES}: Depois de instalado o client do github confira se foi criado o arquivo '${ORA}~/.config/gh/hosts.yml${RES}'"
-  printf "\n\tO arquivo deve ter no mínimo o seguinte conteúdo:\n"
-  printf "\n\t${BLD}github.com:${RES}"    
-  printf "\n\t${BLD}   user:${RES} ${ORA}seu-user-no-github${RES}"
-  printf "\n"
-  printf "\n\tMais informação sobre como configurar o seu cliente do github:"
-  printf "\n\t${ORA}https://docs.github.com/pt/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token${RES}"
-  printf "\n"
-  printf "\n\t${RES}Coloque no path a pasta contendo o script${RES}:"
-  printf "\n\t${RED}> ${DBL}export ${BLD}PATH${RES}=\"${BLU}\$HOME${ORA}/tools/shell-scripts/${RES}:${BLU}\$PATH${RES}\"\n"
-  printf "\n"
-  printf "\n\t${ORA}Crie um ${UND}alias${RES}${ORA} para cada ${YEL}modo${RES}${ORA} de execução do script${RES}:"
-  printf "\n\t${RED}> ${ORA}alias${YEL} gjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}create${RES}\" ## alias for: get-jira-task"
-  printf "\n\t${RED}> ${ORA}alias${YEL} cjt${RES}=\"${BLU}jira-task-manager${RES} ${BLD}-m${RES}=${BLD}close${RES}\"  ## alias for: close-jira-task"
-  printf "\n"
-  printf "\n\tOBS: Para tornar persistente e definivo as configurações da dica acima:\n"
-  printf "\t  - ${ORA}zshell${RES}: coloque no seu arquivo ${ORA}~/.zshrc${RES}\n"
-  printf "\t  - ${ORA}bash${RES}  : coloque no seu arquivo ${ORA}~/.bashrc${RES}\n"
   printf "\n"
   printf "\n${BLD}VERSAO: ${RES}0.20${RES}"
-  printf "\n${BLD}AUTOR : ${RES}joaovic@gmail.com${RES}\n"
+  printf "\n${BLD}AUTOR : ${LNK}mailto:joaovic@gmail.com\a${BLU}joaovic@gmail.com${RES}${LNK}\a\n"
   printf "\n"
 }
 
