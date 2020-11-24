@@ -1,9 +1,9 @@
 ### JIRA TASK MANAGER
 
 
-Realiza uma abstração da task do Jira criando uma issue e um pull request de forma automática.
-O script identifica seu usuário Jira com base no valor da propriedade 'user.name' do seu '~/.gitconfig'
-Caso não encontre, pode ser definido manualmente com os comandos abaixo:
+Realiza o controle da task do Jira criando uma issue e um pull request de forma automática.
+O script identifica seu usuário Jira com base no valor da propriedade 'user.name' do seu '~/.gitconfig'.
+Caso não encontre seu usuário Jira, você pode definir manualmente com os comandos abaixo:
 
 ```bash
 > git config --global user.jira-id "<SEU ID NO JIRA>"
@@ -18,6 +18,7 @@ Caso não encontre, pode ser definido manualmente com os comandos abaixo:
 ```bash
 > jira-task-manager --mode=create --task=PCR-999
 > jira-task-manager -m=create -t=PCR-999
+> gjt -t=PCR-999 (se já tiver criado o alias)
 ```
 
 O script vai vincular a tarefa ao usuário e passar seu _status_ para `Em Andamento`,
@@ -29,13 +30,15 @@ em seguida, vai criar uma `issue` no Github e fazer um vínculo com a tarefa de 
 > jira-task-manager --mode=close --task=PCR-999
 > jira-task-manager -m=close -t=PCR-999
 > jira-task-manager -m=close (se não informar a task, será usado o nome da branch)
+> cjt -t=PCR-999 (se já tiver criado o alias)
+> cjt            (se já tiver criado o alias)
 ```
 
 O script vai passar a tarefa para o _status_ `Review`,
 em seguida, vai criar um `pull request` no Github e fazer um vínculo com a issue
 de modo que ao concluir o `pull request`, a _issue_ vinculada seja automaticamente fechada.
 
-OBS: Caso não seja informado a task a ser fechada, o script utiliza o nome da branch corrente.
+OBS: Caso não seja informado a task a ser fechada, o script utiliza o nome da branch corrente para inferir o nome da task.
 
 
 #### UTILIZAÇÃO
