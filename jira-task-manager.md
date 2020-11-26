@@ -80,7 +80,7 @@ OBS: Caso não seja informado a task a ser fechada, o script utiliza o nome da b
 	  - Connection name (no spaces): PicPay
 	<br/>
   Vide a figura abaixo como deve ficar:
-	![Setup](.jira_task_manager-acli-config.png)
+	![Setup](jira-task-manager-acli-config.png)
 
 1. ##### Baixe e instale a última versão do cliente do Github:
 	https://cli.github.com/

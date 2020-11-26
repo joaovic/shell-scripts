@@ -14,8 +14,6 @@ DBL='\e[0;36m'  # DARK BLUE
 RES='\e[0m'     # RESET ALL
 LNK='\e]8;;'    # LINK
 
-
-
 ### FUNÇÃO QUE EXIBE O HELP
 function showHelp {
   clear
@@ -66,10 +64,9 @@ function showHelp {
   printf "\n"
   printf "\n"
   printf "\n${BLD}CONFIGURAÇÃO:${RES}\n"
-  printf "\n\tVeja em: ${LNK}https://github.com/joaovic/shell-scripts/blob/master/jira-task-manager.md\a${BLU}jira-task-manager.md${RES}${LNK}\a"
+  printf "\n\tVeja em: ${LNK}https://github.com/joaovic/shell-scripts/blob/master/jira-task-manager.md\a${BLU}jira-task-manager.md${RES}${LNK}\a\n"
   printf "\n"
-  printf "\n"
-  printf "\n${BLD}VERSAO: ${RES}0.20${RES}"
+  printf "\n${BLD}VERSAO: ${RES}0.21${RES}"
   printf "\n${BLD}AUTOR : ${LNK}mailto:joaovic@gmail.com\a${BLU}joaovic@gmail.com${RES}${LNK}\a\n"
   printf "\n"
 }
@@ -180,7 +177,7 @@ function copyJiraTaskDescriptionToClipboard() {
   ## Check if exists pbcopy command
   if command -v pbcopy &> /dev/null; then
     ## Copy tmpFile content to clipboard
-    cat ${__tmpFile}| pbcopy
+    cat ${__tmpFile} | pbcopy
   fi
 }
 
@@ -786,8 +783,8 @@ if [ "${MODE}" = "close" ]; then
   
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem creating pull request for task ${RES}${BLD}${TASK}${RED}!${RES}\n"
-    printf "\n${RED}Call down! You can manually change back the status of your Jira task to \"Em Andamento\"${RES}"
-    printf "\n${RED}then pray, cross your fingers and run the command again!${RES}\n\n"
+    printf "\n${ORA}Call down! You can manually change back the status of your Jira task to \"${YEL}Em Andamento${ORA}\"${RES}"
+    printf "\n${ORA}then pray, cross your fingers and run the command again!${RES}\n\n"
     exit -1
   fi
 
@@ -804,7 +801,7 @@ if [ "${MODE}" = "close" ]; then
 
   if [ "$?" -ne 0 ]; then
     printf "\n${RED}Problem getting task description from task ${RES}${BLD}${TASK}${RED}!${RES}\n"
-    printf "\n${RED}Keep calm, you'll survive. Copy your jira task description manually and use it to enrich your PR description!${RES}\n"
+    printf "\n${ORA}Keep calm, you'll survive. Copy your jira task description manually and use it to enrich your PR description!${RES}\n"
     exit -1
   fi
 
