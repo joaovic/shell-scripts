@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Definição de cores para output no console
 BLD='\e[1m'     # BOLD
 DIM='\e[2m'     # DIM
