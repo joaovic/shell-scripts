@@ -15,7 +15,6 @@ RES='\e[0m'     # RESET ALL
 LNK='\e]8;;'    # LINK
 
 
-
 ### FUNÇÃO QUE EXIBE O HELP
 function showHelp {
   clear
