@@ -15,6 +15,7 @@
 # 02 - Atualiza a branch da master com as informações trazidas do remote (git pull)
 # 03 - Cria a branch local (git checkout -b $1)
 # 04 - Configura a branch local para rastrear a branch remota (git branch -u origin/${BRANCH})
+# 05 - Traz as ultimas atualizações da branch remote (git pull)
 
 # Definição de cores para output no console
 BLD='\e[1m'    # BOLD
@@ -165,6 +166,12 @@ git checkout -b ${BRANCH}
 printf "\n${YEL}Configuring ${GRE}${BRANCH}${YEL} to track remote branch ${GRE}origin/${BRANCH}${YEL}... [${RES}git branch -u origin/${BRANCH}${YEL}]...${RES}\n"
 pause "Press RETURN to continue or ^C to abort..."
 git branch -u origin/${BRANCH}
+
+# 05 - Traz as ultimas atualizaçoes da branch remota (git pull)
+printf "\n${YEL}Recupera as últimas atualizações da branch remota... [${RES}git pull${YEL}]...${RES}\n"
+pause "Press RETURN to continue or ^C to abort..."
+git pull
+
 git status
 
 printf "\n\n${GRE}Done!${RES}\n"

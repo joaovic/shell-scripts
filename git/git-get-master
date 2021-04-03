@@ -10,7 +10,7 @@
 # 01 - Recupera o nome da branch corrente no git
 # 02 - Salva o status corrente das modificações ainda não comitadas (git stash)
 # 03 - Muda para a branch da master atual (git checkout master)
-# 04 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
+## 04 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
 # 05 - Atualiza a branch da master com as informações trazidas do remote (git pull)
 # 06 - Retorna para a branch corrente (git checkout "sua-branch-corrente")
 # 07 - Injeta na branch corrente as atualizações recebidas na master (git merge/rebase master)
@@ -192,10 +192,10 @@ printf "\n${YEL}Switching to the master branch [${RES}git checkout ${GRE}master$
 pause "Press RETURN to continue or ^C to abort..."
 git checkout master
 
-# 04 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
-printf "\n${YEL}Fetching remote repository updates [${RES}git fetch origin${YEL}]...${RES}\n"
-pause "Press RETURN to continue or ^C to abort..."
-git fetch origin
+## 04 - Baixa as atualizações existentes no remote para o repositório local (git fetch origin)
+#printf "\n${YEL}Fetching remote repository updates [${RES}git fetch origin${YEL}]...${RES}\n"
+#pause "Press RETURN to continue or ^C to abort..."
+#git fetch origin
 
 # 05 - Atualiza a branch da master com as informações trazidas do remote (git pull)
 printf "\n${YEL}Updating master local branch with remote data [${RES}git pull${YEL}]...${RES}\n"
